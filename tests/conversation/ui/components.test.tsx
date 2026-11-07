@@ -25,6 +25,8 @@ test('the empty companion has only Lets cook, without a title, collapse control 
   const { ui } = viewFixture({ ...emptyView, status: 'idle' });
 
   assert.equal(ui.getByRole('heading').textContent, 'Lets cook');
+  assert.equal(ui.getByRole('main').classList.contains('items-center'), true);
+  assert.equal(ui.getByRole('main').classList.contains('justify-center'), true);
   assert.equal(ui.queryByText('New conversation'), null);
   assert.equal(ui.queryByRole('button', { name: /collapse|expand/i }), null);
   assert.equal(ui.getByRole('status').getAttribute('title'), 'Ready');
