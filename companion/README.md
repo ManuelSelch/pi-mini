@@ -3,7 +3,9 @@
 A real native companion, separate from the preserved floating-window spike and
 mockups. The approved compact interface is implemented here; the full MVP is
 **not complete**: global show/hide/background behavior and real Pi Chat handoff
-still await their executable scenario approval and implementation.
+still await their [executable scenario approval](../tests/companion/mvp-lifecycle.scenarios.test.mjs)
+and implementation. Proposed entry/control contract:
+[remaining MVP design](../plans/companion-mvp/LIFECYCLE-HANDOFF.md).
 
 ## Run locally
 
