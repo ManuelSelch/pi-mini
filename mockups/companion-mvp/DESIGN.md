@@ -1,6 +1,6 @@
 # Companion MVP interface
 
-Revision: 2
+Revision: 3
 Status: in review; not yet visually approved.
 
 ## Goal and scope
@@ -19,7 +19,8 @@ The earlier `mockups/companion/` revision 3 remains preserved unchanged.
   production requirement, not proven by this browser approximation.
 - Reduce spacing throughout: 34px header, 12px transcript/error side padding,
   tighter question/action spacing, and 3px vertical composer padding.
-- Empty state says only “Lets cook”, with no subtitle.
+- Empty state says only “Lets cook”, with no subtitle or “New conversation”
+  header title.
 - Show the latest assistant response, not the latest user submission. Keep all
   text available by scrolling; do not truncate or extract titles from Markdown.
 - No numbered steps, progress dots, invented titles or router-specific start

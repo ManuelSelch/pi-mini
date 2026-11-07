@@ -91,7 +91,7 @@ export function MvpCompanion() {
       : <div className={'companion-shell browser-shell mvp-shell' + (collapsed ? ' collapsed' : '')}>
         <header className="window-header">
           <span className={'mvp-status-dot ' + state} role="status" aria-live="polite" title={status}><span className="visually-hidden">{status}</span></span>
-          <strong className="session-title">{initialState === 'empty' ? 'New conversation' : 'Router setup'}</strong>
+          <strong className="session-title">{text ? 'Router setup' : ''}</strong>
           <div className="header-actions">
             {!collapsed && <ActionIcon variant="subtle" color="gray" aria-label="Open in Pi Chat and transfer control" title="Open in Pi Chat · transfer control" disabled={busy || Boolean(prompt) || inactive || !text} onClick={() => { setState('transferred'); setNotice('Handoff simulated only. Real Pi Chat needs a new session-opening entry contract.'); }}><IconArrowUpRight size={16}/></ActionIcon>}
             <ActionIcon variant="subtle" color="gray" aria-label={collapsed ? 'Expand companion' : 'Collapse companion'} onClick={() => setCollapsed(!collapsed)}>{collapsed ? <IconChevronUp size={15}/> : <IconChevronDown size={15}/>}</ActionIcon>
