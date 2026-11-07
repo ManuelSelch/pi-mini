@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Pi Companion Mockup",
+  "version": "0.1.0",
+  "identifier": "com.piagent.companion-mockup",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://127.0.0.1:5173"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "url": "companion/index.html",
+        "title": "Pi companion · Clickdummy",
+        "width": 360,
+        "height": 480,
+        "minWidth": 320,
+        "minHeight": 380,
+        "center": true,
+        "decorations": false,
+        "resizable": true,
+        "alwaysOnTop": true,
+        "shadow": true,
+        "backgroundColor": "#242424"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app"
+    ],
+    "icon": [
+      "icons/icon.icns",
+      "icons/icon.png"
+    ]
+  }
+}
