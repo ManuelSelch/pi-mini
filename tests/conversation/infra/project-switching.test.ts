@@ -51,6 +51,7 @@ test('selecting a project always creates a new session without reusing the previ
     assert.equal(await app.switchProject(second), true);
     const next = app.getView().sessionId;
     assert.notEqual(next, original);
+    assert.equal(app.getView().projectName, 'second');
     assert.equal(app.getView().response, '');
     assert.equal(await app.switchProject(second), true);
     assert.notEqual(app.getView().sessionId, next);

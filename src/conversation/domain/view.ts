@@ -17,6 +17,7 @@ export interface Question {
 export interface ConversationView {
   sessionId?: string;
   title: string;
+  projectName: string;
   response: string;
   status: CompanionStatus;
   error?: string;
@@ -27,7 +28,7 @@ export interface ConversationView {
 }
 
 export const emptyView: ConversationView = {
-  title: '', response: '', status: 'connecting', canSend: false, canStop: false, submitting: false,
+  title: '', projectName: '', response: '', status: 'connecting', canSend: false, canStop: false, submitting: false,
 };
 
 export const statusLabels: Record<CompanionStatus, string> = {

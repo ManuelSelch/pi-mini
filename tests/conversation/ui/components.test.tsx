@@ -33,6 +33,12 @@ test('the empty companion has only Lets cook, without a title, collapse control 
   assert.equal(ui.getByRole('status').classList.contains('thinking'), false);
 });
 
+test('the header shows the project followed by the session name', () => {
+  const { ui } = viewFixture({ ...emptyView, projectName: 'my-project', title: 'Fix the bug', status: 'idle' });
+
+  assert.match(ui.getByRole('banner').textContent!, /my-project\s*>\s*Fix the bug/);
+});
+
 test('a required confirm submits a boolean and does not send an ordinary message', () => {
   const app = viewFixture({ ...emptyView, response: 'Keep the password private.', status: 'waiting', question: { id: 'q', kind: 'confirm', title: 'Continue?', options: [], explicit: false } });
 

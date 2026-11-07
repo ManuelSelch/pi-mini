@@ -84,8 +84,10 @@ export class Conversation {
       : error ? 'error' : 'idle';
     const firstUser = session?.messages.find((entry) => entry.role === 'user');
     const title = session?.sessionName ?? (firstUser?.role === 'user' ? firstUser.text : '');
+    const projectPath = session?.projectPath ?? this.projectPath;
+    const projectName = session ? projectPath.split(/[\\/]/).filter(Boolean).at(-1) ?? projectPath : '';
     this.view = {
-      sessionId: this.selectedId, title, response: this.usefulResponse, status, error, question,
+      sessionId: this.selectedId, title, projectName, response: this.usefulResponse, status, error, question,
       canSend: ready && Boolean(session) && !busy && !question && !this.submitting,
       canStop: ready && Boolean(busy), submitting: this.submitting,
     };
