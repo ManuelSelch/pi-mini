@@ -117,7 +117,9 @@ specific combination, not all future SDK/server versions.
 Companion-mode instructions control brevity, one actionable procedural step and
 waiting, optional explanation, and preservation of essential warnings. SDK and
 protocol transport messages/status/questions unchanged; the UI adds no invented
-step count, Markdown structure guessing, or new structured-response contract.
+step count or new structured-response contract. Assistant responses use pi-chat's
+Markdown pipeline (GFM, highlighted code and KaTeX math); local file links are
+shown as text because pi-mini does not provide pi-chat's file-open action.
 
 ## Verification
 

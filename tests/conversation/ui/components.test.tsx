@@ -66,7 +66,8 @@ test('errors retain the full response and expose plain red text with transcript 
   const response = 'Check the cable.\n\nWarning: do not open the power supply.';
   const { ui } = viewFixture({ ...emptyView, response, error: 'Provider unavailable', status: 'error' });
 
-  assert.equal(ui.getByText(/Warning: do not open/).textContent, response);
+  assert.equal(ui.getByText('Check the cable.').textContent, 'Check the cable.');
+  assert.equal(ui.getByText('Warning: do not open the power supply.').textContent, 'Warning: do not open the power supply.');
   assert.match(ui.getByRole('alert').className, /text-failure/);
   assert.doesNotMatch(ui.getByRole('alert').className, /bg-/);
   assert.equal(ui.getByRole('alert').classList.contains('px-[12px]'), true);

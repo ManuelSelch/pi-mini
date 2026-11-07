@@ -37,8 +37,15 @@
     "@tabler/icons-react": "3.50.0",
     "@tauri-apps/api": "2.12.4",
     "@tauri-apps/plugin-websocket": "2.5.0",
+    "katex": "^0.18.7",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-katex": "^7.0.1",
+    "remark-breaks": "^4.0.0",
+    "remark-gfm": "^4.0.0",
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.1",
