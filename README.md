@@ -33,6 +33,10 @@ npm run build:app
 
 The app is produced at `src-tauri/target/release/bundle/macos/Pi Mini.app`. To build and install it to `/Applications`, quit the running app first and run `npm run install:app`. It bundles a checksum-verified official Node 22.22.1 runtime and production dependencies, and does not need the checkout or a system Node to start. Building downloads Node and npm packages. The build is not Developer ID signed or notarized, so macOS Gatekeeper may require explicit permission to open it. Provider configuration and credentials still come from the user's Pi installation; external tools and extensions may have their own dependencies.
 
+Development builds include the Agentation toolbar and connect to the separately
+configured local Agentation server at `http://localhost:4747`. It is not included
+in production builds; avoid sensitive information in annotations.
+
 - Fixed 360 × 380, always on top; drag the unused header area to move it.
 - Type a message and press Enter; Shift+Enter inserts a newline.
 - Latest assistant response is scrollable and never blindly truncated.
