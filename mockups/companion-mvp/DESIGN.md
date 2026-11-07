@@ -1,7 +1,7 @@
 # Companion MVP interface
 
 Revision: 6
-Status: in review; not yet visually approved.
+Status: approved for implementation (revision 6).
 
 ## Goal and scope
 
@@ -88,6 +88,7 @@ annotation service.
 
 ## Approval
 
-Await explicit approval of this revision before production UI implementation.
-First-slice scenario/backend approval does not itself approve these new UI states
-or the still-to-be-drafted native lifecycle and Pi Chat handoff scenarios.
+User explicitly approved revision 6: “mockup approved. Implement it”.
+Approved files are preserved here. First-slice scenario/backend approval is
+separate; native lifecycle and Pi Chat handoff still need executable scenario
+drafts and approval before those production behaviors are implemented.

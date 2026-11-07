@@ -1,0 +1,159 @@
+use serde::{Deserialize, Serialize};
+use std::io::{BufRead, BufReader};
+use std::path::PathBuf;
+use std::process::{Child, Command, Stdio};
+use std::sync::{mpsc, Mutex};
+use std::time::{Duration, Instant};
+use tauri::Manager;
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BackendInfo {
+    endpoint: String,
+    project_path: String,
+}
+
+struct Backend {
+    child: Mutex<Option<Child>>,
+    info: Result<BackendInfo, String>,
+}
+
+impl Backend {
+    fn start(data_directory: PathBuf) -> Self {
+        let entry = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../dist-host/main.mjs");
+        let node = std::env::var_os("PI_MINI_NODE").unwrap_or_else(|| "node".into());
+        let result = Command::new(node)
+            .arg(entry)
+            .env("PI_MINI_DATA_DIR", data_directory)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit())
+            .spawn();
+        let mut child = match result {
+            Ok(child) => child,
+            Err(error) => return Self {
+                child: Mutex::new(None),
+                info: Err(format!("Cannot start companion backend: {error}. Install Node >=22.19 or set PI_MINI_NODE.")),
+            },
+        };
+        let stdout = child.stdout.take().expect("piped stdout");
+        let (sender, receiver) = mpsc::channel();
+        std::thread::spawn(move || {
+            for line in BufReader::new(stdout).lines() {
+                let Ok(line) = line else { break };
+                if let Some(json) = line.strip_prefix("PI_MINI_READY ") {
+                    let result = serde_json::from_str::<BackendInfo>(json)
+                        .map_err(|error| format!("Invalid backend readiness: {error}"));
+                    let _ = sender.send(result);
+                } else {
+                    eprintln!("{line}");
+                }
+            }
+        });
+        let info = receiver
+            .recv_timeout(Duration::from_secs(20))
+            .map_err(|error| format!("Companion backend did not become ready: {error}"))
+            .and_then(|result| result);
+        let backend = Self {
+            child: Mutex::new(Some(child)),
+            info,
+        };
+        if backend.info.is_err() {
+            backend.stop();
+        }
+        backend
+    }
+
+    fn stop(&self) {
+        let Ok(mut owned) = self.child.lock() else {
+            return;
+        };
+        let Some(mut child) = owned.take() else {
+            return;
+        };
+        // Dropping our sole stdin handle requests graceful server/runtime disposal.
+        drop(child.stdin.take());
+        let deadline = Instant::now() + Duration::from_secs(12);
+        loop {
+            match child.try_wait() {
+                Ok(Some(_)) => return,
+                Err(_) => break,
+                Ok(None) if Instant::now() < deadline => {
+                    std::thread::sleep(Duration::from_millis(25))
+                }
+                Ok(None) => break,
+            }
+        }
+        // Terminate only the child we own; never a port, service or unrelated Node process.
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+}
+
+fn smoke_requested() -> bool {
+    std::env::args().any(|arg| arg == "--smoke-test" || arg == "--model-smoke")
+}
+
+#[tauri::command]
+fn smoke_mode() -> Option<String> {
+    if std::env::args().any(|arg| arg == "--model-smoke") {
+        Some("model".into())
+    } else if smoke_requested() {
+        Some("startup".into())
+    } else {
+        None
+    }
+}
+
+#[tauri::command]
+fn finish_smoke(app: tauri::AppHandle, mut report: serde_json::Value) -> Result<(), String> {
+    if !smoke_requested() {
+        return Err("Smoke reports require an explicit smoke-test argument".into());
+    }
+    let window = app
+        .get_webview_window("main")
+        .ok_or("Missing main window")?;
+    let size = window.inner_size().map_err(|error| error.to_string())?;
+    let scale = window.scale_factor().map_err(|error| error.to_string())?;
+    report["width"] = serde_json::json!(size.width as f64 / scale);
+    report["height"] = serde_json::json!(size.height as f64 / scale);
+    report["resizable"] =
+        serde_json::json!(window.is_resizable().map_err(|error| error.to_string())?);
+    println!("MINI_REPORT:{report}");
+    app.exit(if report.get("error").is_some() { 1 } else { 0 });
+    Ok(())
+}
+
+#[tauri::command]
+fn backend_info(backend: tauri::State<'_, Backend>) -> Result<BackendInfo, String> {
+    backend.info.clone()
+}
+
+fn main() {
+    let app = tauri::Builder::default()
+        .plugin(tauri_plugin_websocket::init())
+        .invoke_handler(tauri::generate_handler![
+            backend_info,
+            smoke_mode,
+            finish_smoke
+        ])
+        .setup(|app| {
+            let directory = if smoke_requested() {
+                PathBuf::from(
+                    std::env::var_os("PI_MINI_SMOKE_DATA_DIR")
+                        .ok_or("Smoke tests require a private PI_MINI_SMOKE_DATA_DIR")?,
+                )
+            } else {
+                app.path().app_data_dir()?
+            };
+            app.manage(Backend::start(directory));
+            Ok(())
+        })
+        .build(tauri::generate_context!())
+        .expect("Failed to start Pi Mini");
+    app.run(|app, event| {
+        if matches!(event, tauri::RunEvent::Exit) {
+            app.state::<Backend>().stop();
+        }
+    });
+}

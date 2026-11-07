@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import { CompanionDriver } from './support/companion-driver.mjs';
 
-// Acceptance drafts: driver mechanics are deliberately unimplemented pending approval.
+// Real SDK + isolated real server; controlled agent events, not a provider run.
 // Protocol/application coverage does not establish native focus or visual rendering.
 test('a companion-owned backend leaves the normal Pi Chat controller connected', async () => {
   await usingCompanion(async (app) => {

@@ -1,4 +1,14 @@
-# Tauri floating-window spike
+# Pi Mini
+
+The real SDK-backed companion is in [companion/](companion/README.md).
+It implements the approved compact UI and the first conversation slice; global
+show/hide/background operation and real Pi Chat handoff are still pending.
+Run it with `cd companion && npm ci --include=dev && npm run dev`.
+
+The original spike and its existing regression tests are preserved below.
+Root-level npm commands still operate on that spike, not the companion.
+
+## Original floating-window spike
 
 Standalone macOS native-window experiment. Scope approved in chat: compact
 340 × 300 logical-pixel window, initially always on top, pin toggle, dragging,

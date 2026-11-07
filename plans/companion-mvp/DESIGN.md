@@ -1,6 +1,8 @@
 # Companion MVP — first integration slice
 
-Status: proposed; acceptance scenarios await explicit approval.
+Status: first-slice scenarios and backend isolation approved; first slice
+implemented locally. Mockup revision 6 explicitly approved for implementation.
+Native show/hide/background and real Pi Chat handoff remain subsequent slices.
 
 ## Controller ownership
 
@@ -9,7 +11,7 @@ another SDK client against that endpoint replaces the existing controller. The
 SDK stops retrying after replacement; this prevents fighting but does not prevent
 the initial displacement.
 
-Proposed MVP resolution: launch one companion-owned loopback server process on an
+Approved MVP resolution: launch one companion-owned loopback server process on an
 ephemeral port. Do not attach automatically to Pi Chat's normal endpoint or alter
 its running service. Keep companion histories/metadata separate while reusing
 existing provider authentication through supported Pi configuration. Never copy
@@ -18,7 +20,8 @@ implementation; surface any required scope change rather than silently sharing
 mutable session storage.
 
 Native code owns process startup, readiness, endpoint delivery and shutdown.
-Hiding/collapsing the window must not shut down the process or close the runtime.
+Hiding the window must not shut down the process or close the runtime.
+The user removed collapse/expand and user resizing during mockup review.
 An explicit application quit stops the owned process cleanly. A native socket
 adapter/bridge must respect the server's Origin policy; do not weaken it to let
 an unrelated Tauri web origin connect.
@@ -55,8 +58,9 @@ replacement produces a visible superseded state; taking control is explicit.
 
 ## Preserved and changed outcomes
 
-- Preserve compact always-on-top companion, dragging, resizing and anchored
-  collapse, including draft/session retention.
+- Preserve compact always-on-top companion and dragging. User explicitly
+  changed the design to fixed 360 × 380 with no resizing or collapse/expand.
+  Hide/restore must retain draft/session when that subsequent slice is added.
 - Replace canned router progression and simulated replies with real responses.
 - Remove router-only step titles/count/dots and scripted router-start action.
 - Show latest **assistant** response rather than blindly showing the last
@@ -70,14 +74,23 @@ replacement produces a visible superseded state; taking control is explicit.
 ## Approval and evidence
 
 First-slice executable drafts: `tests/companion/conversation.scenarios.test.mjs`.
-Driver methods deliberately throw until approved. These are scaffolded, not
-behaviorally red tests. Complete mechanics after approval using the published
-SDK and isolated real server with controlled runtime events. Such deterministic
-integration tests do not prove a real provider conversation or native rendering;
-verify a real conversation separately without brittle assertions about exact
-model wording.
+All five approved scenarios now have working drivers using the published SDK
+and isolated real server with controlled runtime events. Catalogue tests also
+seed real Pi history and verify it is not visible in the companion. Additional
+unit/integration regressions protect post-admission errors and partial-stream
+recovery. These tests are not a real-provider or visual-rendering claim.
 
-Existing companion mockup revision 3 is still recorded as in review. Update it
-for these states and obtain explicit visual/interaction approval before changing
-production UI. Preserve the mockup separately from the production application.
+`companion/` implements the first slice independently of the preserved root spike
+and mockups. Native WebView startup smoke verifies real runtime creation through
+the native socket bridge and fixed dimensions/non-resizability. An explicitly
+separate real-model native smoke returned “Ready.”. See `companion/README.md`
+for architecture, commands, limitations and verification details.
+
+Approved UI: `mockups/companion-mvp/`, revision 6. User: “mockup approved.
+Implement it”. Agent-owned preview stopped; owned process/listener disappearance
+verified. The original revision 3 mockup remains unchanged as historical source.
 No browser automation or screenshots without permission for visual review.
+The first-slice title action is disabled rather than pretending to open Pi Chat;
+its actual application entry contract still belongs to the subsequent handoff
+slice. Global shortcut, Escape hiding, background operation, and handoff are not
+claimed as implemented.

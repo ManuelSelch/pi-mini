@@ -1,0 +1,2 @@
+.textarea { font-size: 11px; line-height: 1.55; min-height: 24px; padding: 3px 0; color: var(--color-ink); }
+.textarea::placeholder { color: var(--color-muted); }
