@@ -1,6 +1,6 @@
 # Companion MVP interface
 
-Revision: 4
+Revision: 5
 Status: in review; not yet visually approved.
 
 ## Goal and scope
@@ -14,7 +14,9 @@ The earlier `mockups/companion/` revision 3 remains preserved unchanged.
 ## Layout and behavior
 
 - Fixed 360 × 380 charcoal companion: no user resizing or resize handles.
-  Preserve rounded corners, compact title and icon-only Open in Pi Chat.
+  Preserve rounded corners and compact title. The title itself is a
+  keyboard-accessible button to open the session in Pi Chat; no separate icon.
+  Keep its normal appearance quiet, with subtle hover/focus underlining.
   No collapse/expand control or minimized strip. Use Escape to hide and
   Control+Option+Space to restore instead. Native size locking is a production
   requirement, not proven by this browser approximation.
@@ -48,7 +50,7 @@ The earlier `mockups/companion/` revision 3 remains preserved unchanged.
 - Superseded control is passive until explicit Take control. Show only the
   gray status dot and recovery button, without explanatory control prose.
   No automatic reconnection fight. The last response remains available.
-- Clicking Open in Pi Chat itself explicitly transfers the session and control;
+- Clicking the session title explicitly opens Pi Chat and transfers control;
   no intermediate handoff/confirmation screen. Its accessible name and hover
   tooltip explain the transfer. It is unavailable during running, pending
   questions, disconnected states or before there is a conversation. On success

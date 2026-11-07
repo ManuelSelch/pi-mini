@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActionIcon, Button, Textarea } from '@mantine/core';
-import { IconArrowUpRight, IconPlayerStop } from '@tabler/icons-react';
+import { ActionIcon, Button, Textarea, UnstyledButton } from '@mantine/core';
+import { IconPlayerStop } from '@tabler/icons-react';
 import { MvpConversation, type Prompt } from './MvpConversation';
 
 type State = 'idle' | 'thinking' | 'running' | 'select' | 'confirm' | 'input' | 'error' | 'reconnecting' | 'superseded' | 'transferred' | 'empty';
@@ -90,10 +90,7 @@ export function MvpCompanion() {
       : <div className="companion-shell browser-shell mvp-shell">
         <header className="window-header">
           <span className={'mvp-status-dot ' + state} role="status" aria-live="polite" title={status}><span className="visually-hidden">{status}</span></span>
-          <strong className="session-title">{text ? 'Router setup' : ''}</strong>
-          <div className="header-actions">
-            <ActionIcon variant="subtle" color="gray" aria-label="Open in Pi Chat and transfer control" title="Open in Pi Chat · transfer control" disabled={busy || Boolean(prompt) || inactive || !text} onClick={() => { setState('transferred'); setNotice('Handoff simulated only. Real Pi Chat needs a new session-opening entry contract.'); }}><IconArrowUpRight size={16}/></ActionIcon>
-          </div>
+          {text && <UnstyledButton className="session-title session-link" aria-label="Open Router setup in Pi Chat and transfer control" title="Open in Pi Chat · transfer control" disabled={busy || Boolean(prompt) || inactive} onClick={() => { setState('transferred'); setNotice('Handoff simulated only. Real Pi Chat needs a new session-opening entry contract.'); }}>Router setup</UnstyledButton>}
         </header>
         <div className="companion-content">
           {state === 'error' && <div className="error-banner" role="alert">Provider unavailable. Your last response is still here. Try sending again.</div>}

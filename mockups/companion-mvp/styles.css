@@ -1,5 +1,8 @@
 .mvp-shell { width: 360px; height: 380px; }
 .mvp-shell .window-header { height: 34px; padding: 0 8px 0 12px; gap: 7px; cursor: default; }
+.mvp-shell .session-link { flex: 0 1 auto; text-align: left; cursor: pointer; }
+.mvp-shell .session-link:hover:not(:disabled), .mvp-shell .session-link:focus-visible { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.mvp-shell .session-link:disabled { cursor: default; }
 .mvp-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #8cbd94; flex-shrink: 0; }
 .mvp-status-dot.thinking, .mvp-status-dot.running { background: #4dabf7; }
 .mvp-status-dot.select, .mvp-status-dot.confirm, .mvp-status-dot.input { background: #c0a0ee; }
