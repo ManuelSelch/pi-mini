@@ -2,6 +2,7 @@
   "bundle": {
     "active": true,
     "targets": ["app"],
+    "icon": ["icons/icon.icns", "icons/icon.png"],
     "resources": { "../bundle-resources/backend/": "backend/" }
   }
 }
