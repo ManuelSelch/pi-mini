@@ -2,8 +2,8 @@
 
 A native SDK-backed companion, separate from the preserved mockups. The approved compact interface, real conversation, and native lifecycle
 are implemented here. Control+Option+Space shows/focuses the companion and toggles
-it away when already focused. Escape or window close hides it without stopping
-work. Pi Chat handoff is explicitly deferred to the next step; the title action
+it away when already focused. Escape closes the project switcher or stops the
+current run; window close hides the app without stopping work. Pi Chat handoff is explicitly deferred to the next step; the title action
 stays disabled. [Current scope and deferred handoff proposal](plans/companion-mvp/LIFECYCLE-HANDOFF.md).
 
 ## Run locally
@@ -56,8 +56,9 @@ in production builds; avoid sensitive information in annotations.
 - A replaced controller does not reconnect automatically. Take control is explicit.
 - Control+Option+Space shows/focuses the native window and composer from another
   app; pressing it while Pi Mini has focus hides the window.
-- Escape and native window close hide, preserving draft/session and ongoing work.
-  A response can finish while hidden; restoring shows the latest useful answer.
+- Escape closes the project switcher or stops the current run; it never hides the window.
+  Native window close hides it, preserving the draft/session and ongoing work. A
+  response can finish while hidden; restoring shows the latest useful answer.
 - Pi Mini lives in the macOS menu bar as π, not in the Dock or app switcher.
   Use Show Pi Mini to restore it or Quit Pi Mini to stop its owned backend.
   Cmd+Q also quits while focused. If shortcut registration fails, use the menu bar.
@@ -114,8 +115,8 @@ specific combination, not all future SDK/server versions.
 - `src/conversation/ui/containers/`: state subscription and separate ordinary
   composer drafts versus question answers.
 - `src/lifecycle/app/`: native visibility/error listeners and composer-focus
-  requests. Escape closes the project switcher when open; otherwise it asks native
-  code to hide and never answers a prompt or disposes conversation state. Listeners, including late registrations, are
+  requests. Escape is handled by the conversation UI, not native visibility;
+  it closes the switcher or stops a running agent without answering a prompt. Listeners, including late registrations, are
   released on unmount.
 - `scripts/prepare-bundle.sh` and `src-tauri/tauri.bundle.conf.json`: build the relocatable macOS app with its own Node executable, host and production modules. Release builds resolve them from app resources; debug builds use the checkout and `PI_MINI_NODE`.
 - `src-tauri/`: fixed native shell, global shortcut registration, close-to-hide,

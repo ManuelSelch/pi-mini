@@ -15,6 +15,12 @@ export function ConversationContainer({ conversation, onDrag, focusRequest }: Pr
   const [switchFocus, setSwitchFocus] = useState(0);
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.isComposing && !event.defaultPrevented) {
+        if (switcher || !view.canStop) return;
+        event.preventDefault();
+        void conversation.stop();
+        return;
+      }
       if (!event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || event.key.toLowerCase() !== 'o' || event.isComposing) return;
       event.preventDefault();
       if (!view.canSend) return;
@@ -23,7 +29,7 @@ export function ConversationContainer({ conversation, onDrag, focusRequest }: Pr
     };
     window.addEventListener('keydown', keydown);
     return () => window.removeEventListener('keydown', keydown);
-  }, [view.canSend]);
+  }, [conversation, switcher, view.canSend, view.canStop]);
   const closeSwitcher = () => { setSwitcher(false); setSwitchFocus((value) => value + 1); };
   const switchProject = async (path: string) => {
     if (switching) return;

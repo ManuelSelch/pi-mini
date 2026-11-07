@@ -12,6 +12,9 @@ test('global shortcut shows and focuses the fixed companion; Escape preserves it
   await app.launchCompanion();
   await app.enterDraft('Explain the next step');
   await app.pressEscape();
+  await app.expectCompanionVisibleAndComposerFocused();
+  await app.expectSameSessionAndDraft('Explain the next step');
+  await app.pressGlobalShortcut();
   await app.expectCompanionHidden();
   await app.switchToAnotherApplication();
   await app.pressGlobalShortcut();
@@ -23,6 +26,15 @@ test('global shortcut shows and focuses the fixed companion; Escape preserves it
   await app.pressGlobalShortcut();
 
   await app.expectCompanionHidden();
+});
+
+test('Escape stops a running agent without hiding the companion', async () => {
+  await app.launchCompanion();
+  await app.send('Help me connect');
+  await app.pressEscape();
+
+  await app.expectAgentStoppedAndWindowVisible();
+  await app.expectSameSessionAndSingleSubmission('Help me connect');
 });
 
 test('hiding or closing the window leaves the conversation running in the background', async () => {

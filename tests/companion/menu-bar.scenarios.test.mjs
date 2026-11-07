@@ -9,7 +9,8 @@ afterEach(async () => { await app.dispose(); });
 test('menu bar restores the hidden companion without losing its draft', async () => {
   await app.launchCompanion();
   await app.enterDraft('Explain the next step');
-  await app.pressEscape();
+  await app.pressGlobalShortcut();
+  await app.expectCompanionHidden();
   await app.showCompanionFromMenuBar();
   await app.expectCompanionVisibleAndComposerFocused();
   await app.expectSameSessionAndDraft('Explain the next step');

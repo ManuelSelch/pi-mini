@@ -121,6 +121,9 @@ export class RemainingMvpDriver {
     await this.until(() => this.exited, 'menu bar Quit exited', true);
   }
   async pressEscape(): Promise<void> { await this.command('escape'); }
+  async expectAgentStoppedAndWindowVisible(): Promise<void> {
+    await this.until(async () => { const report = await this.command('probe'); return report.visible === true && report.status === 'idle'; }, 'agent stopped with window visible');
+  }
   async expectCompanionHidden(): Promise<void> { await this.until(async () => (await this.command('probe')).visible === false, 'native window hidden'); }
   async switchToAnotherApplication(): Promise<void> {
     this.input('other');

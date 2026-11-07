@@ -22,16 +22,8 @@ export function useNativeLifecycle(onError: (error: unknown) => void): number {
       retain(getCurrentWindow().onFocusChanged((event) => { if (event.payload) focus(); })),
     ]).catch(report);
     void invoke<string | null>('lifecycle_error').then((error) => { if (error) report(new Error(error)); }, report);
-    const keydown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || event.isComposing) return;
-      event.preventDefault();
-      // Hide only; do not cancel an agent prompt, dispose the SDK or clear a draft.
-      void invoke('hide_companion').catch(report);
-    };
-    window.addEventListener('keydown', keydown);
     return () => {
       disposed = true;
-      window.removeEventListener('keydown', keydown);
       for (const unlisten of subscriptions) unlisten();
     };
   }, [onError]);

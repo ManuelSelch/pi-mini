@@ -32,7 +32,7 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-test('Escape hides without answering or aborting; composition and the native shortcut are left alone', async () => {
+test('Escape does not ask native lifecycle to hide the window', async () => {
   renderHook(() => useNativeLifecycle(onError));
   await waitFor(() => expect(native.invoke).toHaveBeenCalledWith('lifecycle_error'));
 
@@ -42,7 +42,7 @@ test('Escape hides without answering or aborting; composition and the native sho
 
   fireEvent.keyDown(window, { key: 'Escape' });
 
-  expect(native.invoke.mock.calls.map((call) => call[0])).toEqual(['lifecycle_error', 'hide_companion']);
+  expect(native.invoke.mock.calls.map((call) => call[0])).toEqual(['lifecycle_error']);
 });
 
 test('show and actual native focus request composer focus again, but losing focus does not', async () => {
@@ -67,16 +67,6 @@ test('shortcut registration failure is surfaced even when it predates JavaScript
   expect(onError).toHaveBeenCalledWith(new Error('Cannot register Control+Option+Space'));
 });
 
-test('native hide failures are visible rather than silently claiming the window is hidden', async () => {
-  native.invoke.mockImplementation(async (name) => { if (name === 'hide_companion') throw new Error('Hide failed'); return null; });
-  renderHook(() => useNativeLifecycle(onError));
-
-  fireEvent.keyDown(window, { key: 'Escape' });
-
-  await waitFor(() => expect(onError).toHaveBeenCalledOnce());
-  expect(onError).toHaveBeenCalledWith(new Error('Hide failed'));
-});
-
 test('a native listener resolving after unmount is released immediately', async () => {
   const release = vi.fn();
   let resolve!: (unlisten: () => void) => void;
@@ -89,7 +79,7 @@ test('a native listener resolving after unmount is released immediately', async 
   expect(release).toHaveBeenCalledOnce();
 });
 
-test('unmount releases native listeners and removes the Escape handler', async () => {
+test('unmount releases native listeners', async () => {
   const { unmount } = renderHook(() => useNativeLifecycle(onError));
   await waitFor(() => expect(unlisten).toHaveLength(3));
 
