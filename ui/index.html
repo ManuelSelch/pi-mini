@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pi Floating Spike</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./main.js" defer></script>
+</head>
+<body>
+  <header id="drag-handle">
+    <span class="brand">✦</span><strong>Pi companion</strong>
+    <span class="spacer"></span>
+    <button id="pin" aria-pressed="true" title="Toggle always on top" disabled>Pinned</button>
+    <button id="close" aria-label="Close window" title="Close">×</button>
+  </header>
+  <main>
+    <div class="eyebrow">NATIVE WINDOW SPIKE</div>
+    <h1>A little help, right here.</h1>
+    <p>Switch to another app. This window should stay above it while pinned.</p>
+    <div class="hint">Drag the header to move · Drag an edge to resize</div>
+    <p id="status" role="status">Connecting to native window…</p>
+  </main>
+  <footer><input aria-label="Placeholder chat input" placeholder="Chat is not connected in this spike" disabled></footer>
+  <div class="resize n" data-edge="North"></div><div class="resize s" data-edge="South"></div>
+  <div class="resize e" data-edge="East"></div><div class="resize w" data-edge="West"></div>
+  <div class="resize nw" data-edge="NorthWest"></div><div class="resize ne" data-edge="NorthEast"></div>
+  <div class="resize sw" data-edge="SouthWest"></div><div class="resize se" data-edge="SouthEast"></div>
+</body>
+</html>

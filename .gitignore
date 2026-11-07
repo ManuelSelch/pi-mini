@@ -1,0 +1,6 @@
+node_modules/
+src-tauri/target/
+*.log
+.DS_Store
+/Pi Floating Spike.app/
+src-tauri/gen/
