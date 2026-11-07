@@ -40,7 +40,7 @@ export async function startCompanionHost(options: HostOptions) {
   const server = createPiServer({
     runtimeFactory: options.runtimeFactory ?? createCompanionRuntimeFactory({ projectPath, sessionsDirectory }),
     catalogue: {
-      sessionsDirectory, metadataFile: join(dataDirectory, 'projects.json'), homeDirectory: null,
+      sessionsDirectory, metadataFile: join(dataDirectory, 'projects.json'),
       // sessionsDirectory configures archive storage, not the default history lister.
       // Supplying this explicitly prevents scans of the normal Pi Chat history.
       lister: { listAll: () => SessionManager.listAll(sessionsDirectory) },

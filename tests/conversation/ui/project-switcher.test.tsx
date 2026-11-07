@@ -27,6 +27,12 @@ test('filter and keyboard navigation select a project, while Escape cancels', ()
   assert.equal(closed, 1);
 });
 
+test('Quick Chats appears first regardless of project order', () => {
+  const ui = render(<MantineProvider><ProjectSwitcher projects={[{ name: 'Alpha', path: '/a' }, { name: 'Quick Chats', path: '/home/user', quickChats: true }]} busy={false} onSelect={() => {}} onClose={() => {}}/></MantineProvider>);
+
+  assert.equal(ui.getAllByRole('option')[0]?.textContent, 'Quick Chats');
+});
+
 test('an absolute folder path can be opened even when not in history', () => {
   const selected: string[] = [];
   const ui = render(<MantineProvider><ProjectSwitcher projects={[]} busy={false} onSelect={(path) => selected.push(path)} onClose={() => {}}/></MantineProvider>);

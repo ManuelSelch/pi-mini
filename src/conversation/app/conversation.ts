@@ -85,7 +85,7 @@ export class Conversation {
     const firstUser = session?.messages.find((entry) => entry.role === 'user');
     const title = session?.sessionName ?? (firstUser?.role === 'user' ? firstUser.text : '');
     const projectPath = session?.projectPath ?? this.projectPath;
-    const projectName = session ? projectPath.split(/[\\/]/).filter(Boolean).at(-1) ?? projectPath : '';
+    const projectName = session ? state.catalogue.projects.find((project) => project.path === projectPath && project.quickChats)?.name ?? projectPath.split(/[\\/]/).filter(Boolean).at(-1) ?? projectPath : '';
     this.view = {
       sessionId: this.selectedId, title, projectName, response: this.usefulResponse, status, error, question,
       canSend: ready && Boolean(session) && !busy && !question && !this.submitting,

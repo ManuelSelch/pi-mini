@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Composer } from './composer';
 
-export interface ProjectOption { path: string; name: string }
+export interface ProjectOption { path: string; name: string; quickChats?: boolean }
 interface Props {
   projects: readonly ProjectOption[];
   busy: boolean;
@@ -13,7 +13,7 @@ interface Props {
 export function ProjectSwitcher({ projects, busy, error, onSelect, onClose }: Props) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(0);
-  const matches = projects.filter((project) => `${project.name} ${project.path}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+  const matches = projects.filter((project) => `${project.name} ${project.path}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).sort((a, b) => Number(Boolean(b.quickChats)) - Number(Boolean(a.quickChats)));
   const path = query.trim();
   const directPath = path.startsWith('/') || path.startsWith('~/');
   const options = directPath && !matches.some((project) => project.path === path) ? [...matches, { name: 'Open folder', path }] : matches;

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import WebSocket from 'ws';
@@ -47,6 +47,9 @@ test('selecting a project always creates a new session without reusing the previ
     const deadline = Date.now() + 5000;
     while (!app.getView().canSend && Date.now() < deadline) await delay(5);
     assert.equal(app.getView().canSend, true);
+    const quickChats = client.getState().catalogue.projects.find((project) => project.quickChats);
+    assert.equal(quickChats?.name, 'Quick Chats');
+    assert.equal(quickChats?.path, await realpath(homedir()));
     const original = app.getView().sessionId;
     assert.equal(await app.switchProject(second), true);
     const next = app.getView().sessionId;
