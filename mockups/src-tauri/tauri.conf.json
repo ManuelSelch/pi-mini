@@ -8,21 +8,23 @@
     "devUrl": "http://127.0.0.1:5173"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",
         "url": "companion/index.html",
         "title": "Pi companion · Clickdummy",
         "width": 360,
-        "height": 480,
+        "height": 380,
         "minWidth": 320,
-        "minHeight": 380,
+        "minHeight": 320,
         "center": true,
         "decorations": false,
         "resizable": true,
         "alwaysOnTop": true,
         "shadow": true,
-        "backgroundColor": "#242424"
+        "transparent": true,
+        "backgroundColor": "#00000000"
       }
     ],
     "security": {

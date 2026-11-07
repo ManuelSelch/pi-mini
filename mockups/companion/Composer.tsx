@@ -17,6 +17,5 @@ export function Composer({ busy, onSend, onStop, full }: Props) {
       }}/>
       <ActionIcon className="send-button" variant={busy ? 'light' : 'filled'} radius="xl" size={27} aria-label={busy ? 'Stop reply' : 'Send message'} disabled={!busy && !text.trim()} onClick={busy ? onStop : send}>{busy ? <IconPlayerStop size={13}/> : <IconArrowUp size={16}/>}</ActionIcon>
     </div>
-    <div className="composer-meta"><span className="status-dot"/><span>Scripted demo · no agent connected</span><span className="enter-hint">↵ send</span></div>
   </div>;
 }
