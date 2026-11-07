@@ -1,6 +1,6 @@
 # Companion MVP interface
 
-Revision: 3
+Revision: 4
 Status: in review; not yet visually approved.
 
 ## Goal and scope
@@ -14,9 +14,10 @@ The earlier `mockups/companion/` revision 3 remains preserved unchanged.
 ## Layout and behavior
 
 - Fixed 360 × 380 charcoal companion: no user resizing or resize handles.
-  Preserve rounded corners, compact title, icon-only Open in Pi Chat and
-  anchored collapse to a fixed 280 × 44 strip. Native size locking is a
-  production requirement, not proven by this browser approximation.
+  Preserve rounded corners, compact title and icon-only Open in Pi Chat.
+  No collapse/expand control or minimized strip. Use Escape to hide and
+  Control+Option+Space to restore instead. Native size locking is a production
+  requirement, not proven by this browser approximation.
 - Reduce spacing throughout: 34px header, 12px transcript/error side padding,
   tighter question/action spacing, and 3px vertical composer padding.
 - Empty state says only “Lets cook”, with no subtitle or “New conversation”
@@ -28,7 +29,7 @@ The earlier `mockups/companion/` revision 3 remains preserved unchanged.
 - One 6px colored dot in the top-left header corner; no status row or visible
   label. Green: ready; blue: thinking/running; purple: required answer;
   amber: reconnecting; gray: control elsewhere; red: error. Preserve status
-  descriptions for screen readers and hover tooltips, including when collapsed.
+  descriptions for screen readers and hover tooltips.
   Preserve the useful answer while waiting, disconnected or reporting an error.
 - Required questions are a separated inline block with only their actual
   question, offered options/Yes/No, and explicit cancellation. No “Answer needed”
@@ -56,7 +57,7 @@ The earlier `mockups/companion/` revision 3 remains preserved unchanged.
   reclaim after ownership might already have changed.
 - Escape hides the mock companion; Show companion restores it. Control+Option+
   Space toggles only while this browser page receives keys. Restoration focuses
-  the composer. Hiding/collapse do not cancel pending local work or clear drafts.
+  the composer. Hiding does not cancel pending local work or clear drafts.
 
 ## Direct states
 

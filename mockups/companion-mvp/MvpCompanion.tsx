@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, Button, Textarea } from '@mantine/core';
-import { IconArrowUpRight, IconChevronDown, IconChevronUp, IconPlayerStop } from '@tabler/icons-react';
+import { IconArrowUpRight, IconPlayerStop } from '@tabler/icons-react';
 import { MvpConversation, type Prompt } from './MvpConversation';
 
 type State = 'idle' | 'thinking' | 'running' | 'select' | 'confirm' | 'input' | 'error' | 'reconnecting' | 'superseded' | 'transferred' | 'empty';
@@ -18,7 +18,6 @@ export function MvpCompanion() {
   const [state, setState] = useState<State>(initialState);
   const [text, setText] = useState(initialState === 'empty' ? '' : answer);
   const [draft, setDraft] = useState('');
-  const [collapsed, setCollapsed] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [notice, setNotice] = useState('');
   const composer = useRef<HTMLTextAreaElement>(null);
@@ -35,8 +34,8 @@ export function MvpCompanion() {
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   useEffect(() => {
-    if (!hidden && !collapsed && !inactive) composer.current?.focus();
-  }, [hidden, collapsed, inactive, prompt?.kind]);
+    if (!hidden && !inactive) composer.current?.focus();
+  }, [hidden, inactive, prompt?.kind]);
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); setHidden(true); }
@@ -88,16 +87,15 @@ export function MvpCompanion() {
       {notice && <p className="review-notice" role="status">{notice}</p>}
     </aside>
     {hidden ? <Button className="restore-companion" variant="default" onClick={() => setHidden(false)}>Show companion · ⌃⌥Space</Button>
-      : <div className={'companion-shell browser-shell mvp-shell' + (collapsed ? ' collapsed' : '')}>
+      : <div className="companion-shell browser-shell mvp-shell">
         <header className="window-header">
           <span className={'mvp-status-dot ' + state} role="status" aria-live="polite" title={status}><span className="visually-hidden">{status}</span></span>
           <strong className="session-title">{text ? 'Router setup' : ''}</strong>
           <div className="header-actions">
-            {!collapsed && <ActionIcon variant="subtle" color="gray" aria-label="Open in Pi Chat and transfer control" title="Open in Pi Chat · transfer control" disabled={busy || Boolean(prompt) || inactive || !text} onClick={() => { setState('transferred'); setNotice('Handoff simulated only. Real Pi Chat needs a new session-opening entry contract.'); }}><IconArrowUpRight size={16}/></ActionIcon>}
-            <ActionIcon variant="subtle" color="gray" aria-label={collapsed ? 'Expand companion' : 'Collapse companion'} onClick={() => setCollapsed(!collapsed)}>{collapsed ? <IconChevronUp size={15}/> : <IconChevronDown size={15}/>}</ActionIcon>
+            <ActionIcon variant="subtle" color="gray" aria-label="Open in Pi Chat and transfer control" title="Open in Pi Chat · transfer control" disabled={busy || Boolean(prompt) || inactive || !text} onClick={() => { setState('transferred'); setNotice('Handoff simulated only. Real Pi Chat needs a new session-opening entry contract.'); }}><IconArrowUpRight size={16}/></ActionIcon>
           </div>
         </header>
-        <div className="companion-content" hidden={collapsed}>
+        <div className="companion-content">
           {state === 'error' && <div className="error-banner" role="alert">Provider unavailable. Your last response is still here. Try sending again.</div>}
           {state === 'superseded' && <div className="control-notice"><Button variant="default" size="compact-xs" onClick={() => { setState('idle'); setNotice('Explicit takeover · simulated'); }}>Take control</Button></div>}
           <MvpConversation text={text} prompt={prompt} canSend={canSend} onAnswer={answerQuestion} onSend={send}/>
