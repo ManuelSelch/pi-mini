@@ -1,4 +1,6 @@
 import { createInterface } from 'node:readline';
+import { mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
 import { startCompanionHost } from '../../src/conversation/infra/host/server';
 import { ControlledRuntime } from './controlled-runtime';
 
@@ -6,7 +8,9 @@ import { ControlledRuntime } from './controlled-runtime';
 const dataDirectory = process.env.PI_MINI_DATA_DIR;
 if (!dataDirectory) throw new Error('Lifecycle fixture requires private storage.');
 let runtime: ControlledRuntime | undefined;
-const host = await startCompanionHost({ dataDirectory, runtimeFactory: {
+const projectPath = join(dataDirectory, 'workspace');
+await mkdir(projectPath, { recursive: true });
+const host = await startCompanionHost({ dataDirectory, projectPath, discoverProjects: false, runtimeFactory: {
   newSession: async (projectPath) => {
     runtime = new ControlledRuntime('native-lifecycle', projectPath, host.storage.sessionsDirectory);
     const prompt = runtime.prompt.bind(runtime);

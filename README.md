@@ -77,12 +77,13 @@ The server can execute tools with your user permissions. This is not a sandbox
 or an authenticated network service. Keep it private/loopback.
 
 Companion data defaults to macOS Application Support under `com.piagent.mini`:
-separate `sessions/`, `projects.json`, and a default `workspace/`. Session history
+separate `sessions/` and `projects.json`. The initial working directory is the
+user's home folder, shown as **Quick Chats**, as in Pi Chat. Session history
 writes and catalogue session reads are rooted there. At startup, project paths
 from normal Pi session history and Pi Chat's pinned projects are imported into
 Pi Mini's own project catalogue; normal transcript contents are not exposed in the
 catalogue. Existing Pi Mini project entries remain available. `PI_MINI_PROJECT`
-selects the initial workspace. Providers, credentials,
+overrides the initial working directory. Providers, credentials,
 settings, extensions and instructions use standard Pi discovery; authentication
 is reused through Pi, never copied into frontend or companion-local auth files.
 

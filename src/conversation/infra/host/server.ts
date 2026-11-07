@@ -1,5 +1,6 @@
 import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { homedir } from 'node:os';
 import { once } from 'node:events';
 import { getAgentDir, SessionManager } from '@earendil-works/pi-coding-agent';
 import { createPiServer, type RuntimeAdapterFactory } from '@manuelselch/pi-server';
@@ -33,9 +34,7 @@ export async function startCompanionHost(options: HostOptions) {
   const dataDirectory = await realpath(options.dataDirectory);
   const sessionsDirectory = join(dataDirectory, 'sessions');
   await mkdir(sessionsDirectory, { recursive: true, mode: 0o700 });
-  const workspace = options.projectPath ?? join(dataDirectory, 'workspace');
-  if (!options.projectPath) await mkdir(workspace, { recursive: true, mode: 0o700 });
-  const projectPath = await realpath(workspace);
+  const projectPath = await realpath(options.projectPath ?? homedir());
   if (options.discoverProjects !== false) await importKnownProjects(join(dataDirectory, 'projects.json'));
   const server = createPiServer({
     runtimeFactory: options.runtimeFactory ?? createCompanionRuntimeFactory({ projectPath, sessionsDirectory }),

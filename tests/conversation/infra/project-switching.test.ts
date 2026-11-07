@@ -10,6 +10,18 @@ import { importKnownProjects, startCompanionHost } from '../../../src/conversati
 import { Conversation } from '../../../src/conversation/app/conversation';
 import { ControlledRuntime } from '../../support/controlled-runtime';
 
+test('the default project is the home directory for Quick Chats', async () => {
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'pi-mini-default-')));
+  const host = await startCompanionHost({ dataDirectory: root, discoverProjects: false });
+  try {
+    assert.equal(host.info.projectPath, await realpath(homedir()));
+    assert.equal(host.storage.sessionsDirectory, join(root, 'sessions'));
+  } finally {
+    await host.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('project discovery imports paths without copying Pi Chat history', async () => {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'pi-mini-discovery-')));
   try {
