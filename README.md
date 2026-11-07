@@ -13,8 +13,14 @@ Configure providers/models with your existing Pi installation first.
 
 ```sh
 npm ci --include=dev
+npm run install:extension
+# Start Pi Chat's server using /pi-chat start in Pi, then:
 npm run dev
 ```
+
+Install the extension into the Pi environment used by the shared server. The installer refuses to overwrite an existing `extensions/pi-mini` directory; explicitly remove that installation before reinstalling. New sessions load the extension; no shared-server source changes or restart are required. There is no `/mini-mode` user command or extra button.
+
+Pi Mini defaults to `ws://127.0.0.1:8788/ws`. Set `PI_MINI_ENDPOINT` for another loopback port and `PI_MINI_PROJECT` for a different initial working directory. Start the shared server before Pi Mini; no private-server fallback is provided.
 
 Or build the native executable with embedded web assets:
 
@@ -60,15 +66,14 @@ in production builds; avoid sensitive information in annotations.
   Native window close hides it, preserving the draft/session and ongoing work. A
   response can finish while hidden; restoring shows the latest useful answer.
 - Pi Mini lives in the macOS menu bar as π, not in the Dock or app switcher.
-  Use Show Pi Mini to restore it or Quit Pi Mini to stop its owned backend.
+  Use Show Pi Mini to restore it or Quit Pi Mini to disconnect and stop its connection helper. The shared server and conversations remain running.
   Cmd+Q also quits while focused. If shortcut registration fails, use the menu bar.
 - The session title's Pi Chat action is deliberately disabled until the real
   handoff entry contract exists. No mock destination or transcript-copy shortcut.
 
 ## Data and security
 
-Native code starts one private loopback server on an ephemeral port. It never
-connects to or restarts the normal Pi Chat server. The native WebSocket adapter
+Pi Mini connects to the existing Pi Chat loopback server. Its Node helper probes `/health` and supplies the endpoint to the native frontend; it never creates, restarts or stops the shared server. One controller is allowed at a time: starting Pi Mini replaces Pi Chat's connection; taking control in Pi Chat replaces Pi Mini's. Neither client automatically fights for control. The native WebSocket adapter
 uses the SDK through Tauri's native socket plugin; the server's browser Origin
 checks remain intact. Frontend code accepts only the native-supplied loopback
 `/ws` endpoint, renders agent Markdown without raw HTML, and receives no provider credentials.
@@ -76,19 +81,10 @@ checks remain intact. Frontend code accepts only the native-supplied loopback
 The server can execute tools with your user permissions. This is not a sandbox
 or an authenticated network service. Keep it private/loopback.
 
-Companion data defaults to macOS Application Support under `com.piagent.mini`:
-separate `sessions/` and `projects.json`. The initial working directory is the
-user's home folder, shown as **Quick Chats**, as in Pi Chat. Session history
-writes and catalogue session reads are rooted there. At startup, project paths
-from normal Pi session history and Pi Chat's pinned projects are imported into
-Pi Mini's own project catalogue; normal transcript contents are not exposed in the
-catalogue. Existing Pi Mini project entries remain available. `PI_MINI_PROJECT`
-overrides the initial working directory. Providers, credentials,
-settings, extensions and instructions use standard Pi discovery; authentication
-is reused through Pi, never copied into frontend or companion-local auth files.
+New conversations use the shared server's session storage and project catalogue, so they appear in Pi Chat's history. The initial working directory defaults to the user's home folder (**Quick Chats**). Providers, credentials, settings and extensions come from the shared server's Pi environment; no credentials are copied into the frontend. Old private Pi Mini history under macOS Application Support `com.piagent.mini` is left untouched and is not migrated.
 
 Each application launch creates a fresh runtime/conversation. Finalized history
-is saved in companion storage, but there is no history picker or last-session
+is saved in shared storage, but there is no history picker or last-session
 restore on a fresh app launch in this slice. Same-server reconnect preserves the
 selected runtime and finalized history without replaying messages or other
 mutations. A missing runtime is reported instead of silently attaching elsewhere.
@@ -97,16 +93,13 @@ the companion suppresses recovered draft suffixes until a finalized message
 arrives rather than presenting an incomplete suffix as the answer. Unexpected backend-process restart/recovery is
 not implemented; quit and relaunch after a permanent backend failure.
 
-Published dependencies are pinned: SDK 0.2.1, server 0.2.1, and that server's Pi
-1.0.2/1.0.3 family. Sibling source checkouts are not runtime dependencies and were
-not modified. The published server itself resolves SDK 0.2.0; no overrides or
-compatibility shims are added. Installed native/real-model smoke verifies this
-specific combination, not all future SDK/server versions.
+Published dependencies remain pinned: SDK 0.2.1, server 0.2.1, and Pi 1.0.2/1.0.3 for local extension/build/test tooling. Production conversations run in the existing server's Pi environment. No server/SDK source changes or compatibility shims are added.
 
 ## Architecture
 
-- `src/conversation/infra/host/`: private server, isolated catalogue/history,
-  standard Pi services/runtime adapter, and companion-mode instructions.
+- `src/conversation/infra/host/main.ts` and `shared-server.ts`: connection helper and shared-server health/configuration validation. The old `server.ts`/`runtime.ts` private-host helpers remain used only by isolated regression/native lifecycle fixtures, not normal startup.
+- `src/conversation/infra/mini-mode.ts`: installable Pi extension. A global `pi-mini.initialize` action routes to the correct session's Pi API using its raw Pi session ID, not a latest-session closure. It inserts one persisted custom instruction message, without a model turn, user command, UI button or transcript marker. Startup/shutdown maintain routing; existing branch instructions prevent duplicate insertion.
+- `src/conversation/infra/initialize-mini-session.ts`: SDK action admission/completion tracking. The composer is locked until initialization succeeds. Missing extensions, failed operations and interrupted initialization surface errors without automatic replay.
 - `src/conversation/infra/native-transport.ts`: bounded, ordered, native socket
   transport only. It preserves close code 4001; it does not own response length.
 - `src/conversation/app/`: SDK state orchestration, selected runtime, latest useful
@@ -124,11 +117,11 @@ specific combination, not all future SDK/server versions.
   menu bar recovery, accessory activation, and explicit Quit lifecycle ownership of its Node child. Window
   and native WebView keyboard focus are restored before requesting composer
   focus. Hidden windows stay mounted/connected. Parent stdin EOF requests
-  graceful backend shutdown; forced termination is restricted to the owned
+  helper shutdown (or private fixture shutdown in explicit lifecycle tests); forced termination is restricted to the owned
   child after its deadline. No broad process/port killing.
 
 Companion-mode instructions control brevity, one actionable procedural step and
-waiting, optional explanation, and preservation of essential warnings. SDK and
+waiting, optional explanation, and preservation of essential warnings. They are session context, not a server-wide system-prompt override, and stay with the conversation in Pi Chat. Pi Mini always creates a new conversation, including on project switches; it does not open existing history. Compaction behavior is outside this short-session feature's scope. SDK and
 protocol transport messages/status/questions unchanged; the UI adds no invented
 step count or new structured-response contract. Assistant responses use pi-chat's
 Markdown pipeline (GFM, highlighted code and KaTeX math); local file links are
@@ -144,7 +137,8 @@ npm run test:packaging
 ```
 
 - Packaging scenarios at `tests/companion/packaging.scenarios.test.mjs` build the release app and copy it into disposable Applications/relocation directories. macOS sandbox rules deny checkout reads; PATH excludes system Node and an invalid `PI_MINI_NODE` confirms release builds ignore that development override. Real WebView/SDK readiness, bundled Node ownership, standard Pi configuration-directory discovery, child shutdown and an unrelated loopback service are checked. The smoke invokes the real Tauri exit path; it does not automate the menu-bar Quit action or make a model call. These tests require a macOS desktop session and do not alter the user's checkout or installed app.
-- Five persistent approved application/protocol scenarios are at
+- Five shared-server acceptance scenarios are at `tests/companion/shared-server.scenarios.test.mjs`: shared history, explicit control transfer, instruction persistence, quit without stopping the service, and unavailable-server errors. They use real Pi runtimes/extensions, server, SDK and storage. Only model execution is replaced with a deterministic exchange; no actual Pi Chat frontend/browser rendering is claimed.
+- Four conversation regression scenarios are at
   `tests/companion/conversation.scenarios.test.mjs`. Drivers use real SDKs,
   isolated real servers and a controlled agent adapter. They do not claim to
   automate the actual Pi Chat frontend. Instruction checks construct a real Pi
@@ -153,9 +147,7 @@ npm run test:packaging
   ordered sends, controller replacement, prompts/follow-ups, composer Stop, and
   compact response/error presentation. DOM tests do not establish native geometry.
 - Native smoke launches the actual executable/WebView, native WebSocket plugin,
-  server and real Pi runtime. It asserts SDK readiness, runtime creation and
-  fixed dimensions/non-resizability without sending a model message. It reuses
-  normal provider/resource configuration but uses disposable history/workspace.
+  shared server and real Pi runtime/extension. It asserts SDK readiness, initialized runtime creation and fixed dimensions/non-resizability without sending a model message. The test runner owns the disposable external server; the app only owns its connection helper.
 - Native menu bar scenarios are at `tests/companion/menu-bar.scenarios.test.mjs`.
   They use Accessibility and synthetic keyboard input and require an idle desktop;
   concurrent user interaction can interfere with them.
@@ -181,7 +173,9 @@ npm run test:packaging
 - An explicitly separate `--model-smoke` mode sends one harmless real prompt
   through that full native path and checks for a nonempty response. It requires
   `PI_MINI_SMOKE_DATA_DIR`; it is not part of routine tests because it consumes
-  configured provider access. Native owner exit shuts down its backend.
+  configured provider access and an already-running shared server with the extension installed. It writes a short session to that server's history; native exit does not stop the server.
+
+Shared-server verification: 24 application/protocol tests, 19 DOM/hook tests, the native startup smoke, and all three relocated/packaged-app scenarios pass. TypeScript, web/host/extension builds, debug/release native builds and `cargo check` pass. `main.rs` formatting passes; whole-crate `cargo fmt --check` still reports pre-existing formatting in `lifecycle.rs` and `menu_bar.rs`, left unchanged. The extension installer was checked in a temporary Pi directory, including refusal to overwrite. The user's live extension directory and installed app were not modified; use the installation commands above to activate this build. Full focus/menu-bar lifecycle and real-model smoke were not rerun for this change.
 
 Earlier verification covered 13 application/transport tests, 11 DOM/hook tests,
 production builds, startup smoke and the three original lifecycle scenarios. The
@@ -192,6 +186,5 @@ No screenshots, visual comparison or real Pi Chat handoff claimed. Handoff's 4
 unimplemented scenario drafts are retained separately and are not run or counted
 as passing coverage.
 
-`npm audit` reports 4 inherited Pi/server findings (3 moderate, 1 high, including
-minimatch/undici). No upstream dependency override or unrelated upgrade was made.
+The packaging dependency install reported 8 inherited findings (4 low, 3 moderate, 1 high). No upstream dependency override or unrelated upgrade was made.
 A new Vitest dependency was patched to 5.1.0 before final verification.

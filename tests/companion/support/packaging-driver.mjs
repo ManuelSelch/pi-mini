@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:net';
 import { setTimeout as delay } from 'node:timers/promises';
 
+import { SharedServerDriver } from '../../support/shared-server-driver.ts';
+
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const bundle = join(root, 'src-tauri/target/release/bundle/macos/Pi Mini.app');
 
@@ -17,7 +19,9 @@ export class PackagingDriver {
     this.installed = join(this.directory, 'Applications', 'Pi Mini.app');
     await cp(bundle, this.installed, { recursive: true });
     this.app = this.installed;
-    this.env = { ...process.env, PATH: '/usr/bin:/bin', PI_MINI_NODE: '/nonexistent/node' };
+    this.sharedServer = new SharedServerDriver();
+    await this.sharedServer.startPiChatServer();
+    this.env = { ...process.env, ...this.sharedServer.connectionEnvironment(), PATH: '/usr/bin:/bin', PI_MINI_NODE: '/nonexistent/node' };
     delete this.env.NODE_PATH;
     delete this.env.NODE_OPTIONS;
   }
@@ -70,7 +74,7 @@ export class PackagingDriver {
 
   launchRelocatedApp() { return this.launchInstalledApp(); }
 
-  async expectCompanionReadyWithPrivateBackend() {
+  async expectCompanionReadyWithSharedServer() {
     assert.equal(await this.closed, 0, this.errors + this.output);
     clearInterval(this.timer);
     clearTimeout(this.deadline);
@@ -82,6 +86,7 @@ export class PackagingDriver {
     assert.ok(report.sessionId);
     assert.ok(this.backendPids.size > 0, 'Must observe an app-bundled Node child');
     await this.expectOwnedBackendStopped();
+    await this.sharedServer.expectPiChatServerAvailable();
   }
 
   async expectStandardPiConfigurationAvailable() {
@@ -104,7 +109,7 @@ export class PackagingDriver {
 
   async quitApp() {
     // Startup smoke requests the actual Tauri app.exit path after SDK readiness.
-    await this.expectCompanionReadyWithPrivateBackend();
+    await this.expectCompanionReadyWithSharedServer();
   }
 
   async expectOwnedBackendStopped() {
@@ -144,6 +149,7 @@ export class PackagingDriver {
     }
     if (this.backendPids) await this.expectOwnedBackendStopped();
     if (this.service) await new Promise(resolve => this.service.close(resolve));
+    await this.sharedServer?.dispose();
     if (this.directory) await rm(this.directory, { recursive: true, force: true });
   }
 }

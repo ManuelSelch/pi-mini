@@ -15,6 +15,7 @@ use tauri::Manager;
 struct BackendInfo {
     endpoint: String,
     project_path: String,
+    shared: bool,
 }
 
 struct Backend {
@@ -72,7 +73,7 @@ impl Backend {
         });
         let info = receiver
             .recv_timeout(Duration::from_secs(20))
-            .map_err(|error| format!("Companion backend did not become ready: {error}"))
+            .map_err(|error| format!("Pi Chat server unavailable or connection helper failed: {error}. Start Pi Chat's server before Pi Mini; check PI_MINI_ENDPOINT for a custom port."))
             .and_then(|result| result);
         let backend = Self {
             child: Mutex::new(Some(child)),
@@ -91,7 +92,8 @@ impl Backend {
         let Some(mut child) = owned.take() else {
             return;
         };
-        // Dropping our sole stdin handle requests graceful server/runtime disposal.
+        // Stop only the connection helper (or the explicitly selected test fixture).
+        // The shared Pi Chat server and its sessions are never owned here.
         drop(child.stdin.take());
         let deadline = Instant::now() + Duration::from_secs(12);
         loop {

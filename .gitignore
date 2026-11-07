@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-extension/
 dist-host/
 bundle-resources/
 src-tauri/target/

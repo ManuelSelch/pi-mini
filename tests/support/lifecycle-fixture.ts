@@ -24,7 +24,7 @@ const host = await startCompanionHost({ dataDirectory, projectPath, discoverProj
   continueProject: async () => { throw new Error('Unexpected continue'); },
   openSession: async () => { throw new Error('Unexpected open'); },
 } });
-console.log('PI_MINI_READY ' + JSON.stringify(host.info));
+console.log('PI_MINI_READY ' + JSON.stringify({ ...host.info, shared: false }));
 const input = createInterface({ input: process.stdin });
 input.on('line', (line) => {
   const command: unknown = JSON.parse(line);

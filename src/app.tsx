@@ -7,6 +7,7 @@ import { watchNativeSmoke } from './conversation/app/native-smoke';
 import { watchNativeLifecycle } from './lifecycle/app/native-test';
 import { useNativeLifecycle } from './lifecycle/app/use-native-lifecycle';
 import { createNativeTransport } from './conversation/infra/native-transport';
+import { initializeMiniSession } from './conversation/infra/initialize-mini-session';
 import { emptyView } from './conversation/domain/view';
 import { CompanionView } from './conversation/ui/components/companion-view';
 import { ConversationContainer } from './conversation/ui/containers/conversation-container';
@@ -24,11 +25,11 @@ export function App() {
     let active: Conversation | undefined;
     let stopSmoke: (() => void) | undefined;
     const start = async () => {
-      if (!isTauri()) throw new Error('Launch the native companion with npm run dev. The browser preview cannot connect to its private backend.');
-      const info = await invoke<{ endpoint: string; projectPath: string }>('backend_info');
+      if (!isTauri()) throw new Error('Launch the native companion with npm run dev. The browser preview cannot connect to the shared backend.');
+      const info = await invoke<{ endpoint: string; projectPath: string; shared: boolean }>('backend_info');
       const smoke = await invoke<'startup' | 'model' | 'lifecycle' | null>('smoke_mode');
       if (cancelled) return;
-      active = new Conversation(new PiClient({ endpoint: info.endpoint, transport: createNativeTransport() }), info.projectPath);
+      active = new Conversation(new PiClient({ endpoint: info.endpoint, transport: createNativeTransport() }), info.projectPath, info.shared ? initializeMiniSession : undefined);
       setConversation(active);
       if (smoke === 'lifecycle') stopSmoke = watchNativeLifecycle(() => ({ ...active!.getView(), phase: active!.client.getState().connection.phase, connectionId: active!.client.getState().connectionId }), active.subscribe);
       else if (smoke) stopSmoke = watchNativeSmoke(active, smoke);

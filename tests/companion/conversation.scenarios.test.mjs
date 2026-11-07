@@ -7,14 +7,6 @@ afterEach(async () => { await app.dispose(); });
 
 // Real SDK + isolated real server; controlled agent events, not a provider run.
 // Protocol/application coverage does not establish native focus or visual rendering.
-test('a companion-owned backend leaves the normal Pi Chat controller connected', async () => {
-  await app.connectNormalPiChat();
-  await app.startCompanion();
-
-  await app.expectIndependentBackendAndStorage();
-  await app.expectNormalPiChatStillControlsItsBackend();
-});
-
 test('one real SDK session streams the latest assistant answer without truncation', async () => {
   await app.startCompanion();
   await app.send('Help me configure my router');

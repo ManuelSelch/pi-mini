@@ -5,13 +5,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { SharedServerDriver } from './shared-server-driver.ts';
+
 export class NativeDriver {
   #report;
 
   async launch({ model = false } = {}) {
     const directory = await realpath(await mkdtemp(join(tmpdir(), 'pi-mini-native-')));
     const executable = fileURLToPath(new URL('../../src-tauri/target/debug/pi-mini', import.meta.url));
-    const child = spawn(executable, [model ? '--model-smoke' : '--smoke-test'], { env: { ...process.env, PI_MINI_SMOKE_DATA_DIR: directory }, stdio: ['ignore', 'pipe', 'pipe'] });
+    const server = model ? undefined : new SharedServerDriver();
+    await server?.startPiChatServer();
+    const child = spawn(executable, [model ? '--model-smoke' : '--smoke-test'], { env: { ...process.env, ...server?.connectionEnvironment(), PI_MINI_SMOKE_DATA_DIR: directory }, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (data) => { stdout = (stdout + data.toString()).slice(-1_000_000); });
@@ -29,7 +33,8 @@ export class NativeDriver {
     } finally {
       clearTimeout(timer);
       if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
-      // Native owner stdin EOF shuts down its backend, including on abnormal owner exit.
+      // The test owns this isolated shared-server fixture, not the native app.
+      await server?.dispose();
       await rm(directory, { recursive: true, force: true });
     }
   }

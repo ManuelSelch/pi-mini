@@ -9,6 +9,7 @@ export class Conversation {
   private unsubscribeMessages?: () => void;
   private selectedId?: string;
   private creating = false;
+  private initializationFailed = false;
   private creationAttempted = false;
   private disposed = false;
   private submitting = false;
@@ -17,7 +18,7 @@ export class Conversation {
   private previouslyReady = false;
   private ignoreRecoveredDraft = false;
 
-  constructor(readonly client: PiClient, private projectPath: string) {}
+  constructor(readonly client: PiClient, private projectPath: string, private readonly initializeSession?: (client: PiClient, id: string) => Promise<void>) {}
 
   getView = (): ConversationView => this.view;
   subscribe = (listener: () => void): (() => void) => {
@@ -88,7 +89,7 @@ export class Conversation {
     const projectName = session ? state.catalogue.projects.find((project) => project.path === projectPath && project.quickChats)?.name ?? projectPath.split(/[\\/]/).filter(Boolean).at(-1) ?? projectPath : '';
     this.view = {
       sessionId: this.selectedId, title, projectName, response: this.usefulResponse, status, error, question,
-      canSend: ready && Boolean(session) && !busy && !question && !this.submitting,
+      canSend: ready && Boolean(session) && !this.creating && !busy && !question && !this.submitting && !this.initializationFailed,
       canStop: ready && Boolean(busy), submitting: this.submitting,
     };
     for (const listener of this.listeners) listener();
@@ -97,8 +98,10 @@ export class Conversation {
   private async createSession(): Promise<void> {
     try {
       this.selectedId = await this.client.createSession(this.projectPath);
+      await this.initializeSession?.(this.client, this.selectedId);
     } catch (error) {
-      if (!this.disposed) this.localError = this.describeOutcome(error);
+      this.initializationFailed = true;
+      if (!this.disposed) this.localError = `Cannot initialize Pi Mini. Check that the Pi Mini extension is installed in the shared server. ${this.describeOutcome(error)}`;
     } finally {
       this.creating = false;
       this.synchronize(this.client.getState());
@@ -133,6 +136,7 @@ export class Conversation {
     const previous = this.selectedId;
     return this.submit(async () => {
       const next = await this.client.createSession(path);
+      await this.initializeSession?.(this.client, next);
       if (this.disposed) return;
       this.selectedId = next;
       this.projectPath = path;
@@ -162,7 +166,7 @@ export class Conversation {
 
   takeControl(): void {
     if (this.client.getState().connection.phase !== 'superseded') return;
-    this.localError = undefined;
+    if (!this.initializationFailed) this.localError = undefined;
     this.client.takeControl();
   }
 

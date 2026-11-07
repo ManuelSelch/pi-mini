@@ -12,7 +12,7 @@ type Connect = (endpoint: string, config: ConnectionConfig) => Promise<NativeSoc
 export function createNativeTransport(connect: Connect = NativeWebSocket.connect): TransportFactory {
   return (endpoint, handlers) => {
     const url = new URL(endpoint);
-    if (url.protocol !== 'ws:' || url.hostname !== '127.0.0.1' || url.pathname !== '/ws' || url.username || url.password || url.search || url.hash) throw new Error('Only the companion-owned loopback endpoint is allowed.');
+    if (url.protocol !== 'ws:' || url.hostname !== '127.0.0.1' || url.pathname !== '/ws' || url.username || url.password || url.search || url.hash) throw new Error('Only a private loopback endpoint is allowed.');
     let socket: NativeSocket | undefined;
     let unlisten: (() => void) | undefined;
     let closed = false;
