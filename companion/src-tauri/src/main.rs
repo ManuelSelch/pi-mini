@@ -1,3 +1,6 @@
+mod lifecycle;
+mod native_test;
+
 use serde::{Deserialize, Serialize};
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -20,7 +23,11 @@ struct Backend {
 
 impl Backend {
     fn start(data_directory: PathBuf) -> Self {
-        let entry = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../dist-host/main.mjs");
+        let entry = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(if native_test::requested() {
+            "../dist-host/lifecycle-fixture.mjs"
+        } else {
+            "../dist-host/main.mjs"
+        });
         let node = std::env::var_os("PI_MINI_NODE").unwrap_or_else(|| "node".into());
         let result = Command::new(node)
             .arg(entry)
@@ -91,12 +98,15 @@ impl Backend {
 }
 
 fn smoke_requested() -> bool {
-    std::env::args().any(|arg| arg == "--smoke-test" || arg == "--model-smoke")
+    std::env::args()
+        .any(|arg| arg == "--smoke-test" || arg == "--model-smoke" || arg == "--lifecycle-test")
 }
 
 #[tauri::command]
 fn smoke_mode() -> Option<String> {
-    if std::env::args().any(|arg| arg == "--model-smoke") {
+    if native_test::requested() {
+        Some("lifecycle".into())
+    } else if std::env::args().any(|arg| arg == "--model-smoke") {
         Some("model".into())
     } else if smoke_requested() {
         Some("startup".into())
@@ -131,13 +141,39 @@ fn backend_info(backend: tauri::State<'_, Backend>) -> Result<BackendInfo, Strin
 
 fn main() {
     let app = tauri::Builder::default()
+        .manage(lifecycle::LifecycleState::default())
         .plugin(tauri_plugin_websocket::init())
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, _, event| {
+                    if event.state != tauri_plugin_global_shortcut::ShortcutState::Pressed {
+                        return;
+                    }
+                    if let Err(error) = lifecycle::toggle(app) {
+                        lifecycle::report_error(app, error);
+                    }
+                })
+                .build(),
+        )
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                if let Err(error) = lifecycle::hide_companion(window.app_handle().clone()) {
+                    lifecycle::report_error(window.app_handle(), error);
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             backend_info,
             smoke_mode,
-            finish_smoke
+            finish_smoke,
+            native_test::lifecycle_report,
+            lifecycle::hide_companion,
+            lifecycle::lifecycle_error
         ])
         .setup(|app| {
+            app.set_menu(tauri::menu::Menu::default(app.handle())?)?;
+            lifecycle::register(app.handle());
             let directory = if smoke_requested() {
                 PathBuf::from(
                     std::env::var_os("PI_MINI_SMOKE_DATA_DIR")
@@ -147,13 +183,24 @@ fn main() {
                 app.path().app_data_dir()?
             };
             app.manage(Backend::start(directory));
+            if let Err(error) = lifecycle::show_and_focus(app.handle()) {
+                lifecycle::report_error(app.handle(), error);
+            }
+            if native_test::requested() {
+                native_test::start(app.handle().clone());
+            }
             Ok(())
         })
         .build(tauri::generate_context!())
         .expect("Failed to start Pi Mini");
-    app.run(|app, event| {
-        if matches!(event, tauri::RunEvent::Exit) {
-            app.state::<Backend>().stop();
+    app.run(|app, event| match event {
+        tauri::RunEvent::Exit => app.state::<Backend>().stop(),
+        #[cfg(target_os = "macos")]
+        tauri::RunEvent::Reopen { .. } => {
+            if let Err(error) = lifecycle::show_and_focus(app) {
+                lifecycle::report_error(app, error);
+            }
         }
+        _ => {}
     });
 }

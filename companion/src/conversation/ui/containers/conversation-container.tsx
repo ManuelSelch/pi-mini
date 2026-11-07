@@ -3,9 +3,9 @@ import type { Conversation } from '../../app/conversation';
 import { CompanionView } from '../components/companion-view';
 import { Composer } from '../components/composer';
 
-interface Props { conversation: Conversation; onDrag: () => void }
+interface Props { conversation: Conversation; onDrag: () => void; focusRequest: number }
 
-export function ConversationContainer({ conversation, onDrag }: Props) {
+export function ConversationContainer({ conversation, onDrag, focusRequest }: Props) {
   const view = useSyncExternalStore(conversation.subscribe, conversation.getView);
   const [draft, setDraft] = useState('');
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -31,5 +31,5 @@ export function ConversationContainer({ conversation, onDrag }: Props) {
     onCancel={() => { if (question) void conversation.answer(question.id, { cancelled: true }); }}
     onTakeControl={() => conversation.takeControl()}
     composer={<Composer text={text} label={typedQuestion?.title ?? 'Message Pi'} placeholder={typedQuestion?.placeholder ?? (typedQuestion ? 'Your answer…' : 'Ask…')} disabled={disabled}
-      canSubmit={Boolean(typedQuestion) && !view.submitting || view.canSend} canStop={view.canStop} focusKey={typedQuestion?.id} onChange={change} onSend={() => { void send(); }} onStop={() => { void conversation.stop(); }}/>}/>;
+      canSubmit={Boolean(typedQuestion) && !view.submitting || view.canSend} canStop={view.canStop} focusKey={`${focusRequest}:${typedQuestion?.id ?? 'message'}`} onChange={change} onSend={() => { void send(); }} onStop={() => { void conversation.stop(); }}/>}/>;
 }

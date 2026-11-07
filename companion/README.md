@@ -1,11 +1,11 @@
 # Pi Mini — SDK conversation slice
 
 A real native companion, separate from the preserved floating-window spike and
-mockups. The approved compact interface is implemented here; the full MVP is
-**not complete**: global show/hide/background behavior and real Pi Chat handoff
-still await their [executable scenario approval](../tests/companion/mvp-lifecycle.scenarios.test.mjs)
-and implementation. Proposed entry/control contract:
-[remaining MVP design](../plans/companion-mvp/LIFECYCLE-HANDOFF.md).
+mockups. The approved compact interface, real conversation, and native lifecycle
+are implemented here. Control+Option+Space shows/focuses the companion and toggles
+it away when already focused. Escape or window close hides it without stopping
+work. Pi Chat handoff is explicitly deferred to the next step; the title action
+stays disabled. [Current scope and deferred handoff proposal](../plans/companion-mvp/LIFECYCLE-HANDOFF.md).
 
 ## Run locally
 
@@ -42,8 +42,13 @@ Do not move the checkout after building without rebuilding the native executable
 - Done / Explain / I’m stuck send ordinary messages, not required prompt answers.
 - Stop aborts the run without closing its runtime or clearing the draft.
 - A replaced controller does not reconnect automatically. Take control is explicit.
-- Cmd+Q or closing this first-slice app stops its owned backend. Escape hiding,
-  global Control+Option+Space and background operation are not implemented yet.
+- Control+Option+Space shows/focuses the native window and composer from another
+  app; pressing it while Pi Mini has focus hides the window.
+- Escape and native window close hide, preserving draft/session and ongoing work.
+  A response can finish while hidden; restoring shows the latest useful answer.
+- Cmd+Q explicitly quits and stops only the companion-owned backend. The Dock's
+  reopen action also restores the window. A shortcut-registration failure is
+  shown as plain red error text; use the Dock if that shortcut is unavailable.
 - The session title's Pi Chat action is deliberately disabled until the real
   handoff entry contract exists. No mock destination or transcript-copy shortcut.
 
@@ -94,9 +99,16 @@ specific combination, not all future SDK/server versions.
 - `src/conversation/ui/components/`: value/callback-only Mantine/Tailwind views.
 - `src/conversation/ui/containers/`: state subscription and separate ordinary
   composer drafts versus question answers.
-- `src-tauri/`: fixed native shell and lifecycle ownership of its Node child.
-  Parent stdin EOF requests graceful shutdown; forced termination is restricted
-  to the owned child after its shutdown deadline. No broad process/port killing.
+- `src/lifecycle/app/`: native visibility/error listeners and composer-focus
+  requests. Escape only asks native code to hide; it never answers a prompt or
+  disposes conversation state. Listeners, including late registrations, are
+  released on unmount.
+- `src-tauri/`: fixed native shell, global shortcut registration, close-to-hide,
+  Dock reopen, and explicit Quit lifecycle ownership of its Node child. Window
+  and native WebView keyboard focus are restored before requesting composer
+  focus. Hidden windows stay mounted/connected. Parent stdin EOF requests
+  graceful backend shutdown; forced termination is restricted to the owned
+  child after its deadline. No broad process/port killing.
 
 Companion-mode instructions control brevity, one actionable procedural step and
 waiting, optional explanation, and preservation of essential warnings. SDK and
@@ -108,7 +120,7 @@ step count, Markdown structure guessing, or new structured-response contract.
 ```sh
 npm test
 npm run build:native
-node --test tests/native/startup.test.mjs
+npm run test:native
 ```
 
 - Five persistent approved application/protocol scenarios are at
@@ -123,15 +135,37 @@ node --test tests/native/startup.test.mjs
   server and real Pi runtime. It asserts SDK readiness, runtime creation and
   fixed dimensions/non-resizability without sending a model message. It reuses
   normal provider/resource configuration but uses disposable history/workspace.
+- Three approved native lifecycle scenarios are at
+  `../tests/companion/mvp-lifecycle.scenarios.test.mjs`. They use the real native
+  window/WebView, SDK, sidecar and server with a controlled test-only agent (no
+  model/credential access). The macOS helper activates another app, posts the
+  actual global shortcut and Cmd+Q, and queries the real foreground application.
+  Driver probes additionally assert native visibility/focus/dimensions, composer
+  DOM focus, session/backend identity, draft retention, background completion,
+  single submission and owned-process/listener shutdown. Input drafts and local
+  Enter/Escape events are driven inside the real WebView; these are not evidence
+  of physical text entry or physical Escape-key delivery. Dock reopen is source
+  inspected, not separately automated. No screenshot or visual fidelity claim.
+  Scenarios use standard beforeEach/afterEach with a fresh driver and guaranteed
+  teardown, not per-scenario wrapper helpers.
+- Native scenarios run serially because they temporarily change foreground focus
+  and share the OS shortcut namespace. They require macOS Accessibility/event-post
+  permission for the test runner; missing permission is a test failure, not a
+  silent skip. The driver restores the previous app and stops only owned processes.
+- `--lifecycle-test` and its private stdin/probe bridge are explicitly test-only;
+  its compiled fixture is built by `test:native`, never selected on normal launch.
 - An explicitly separate `--model-smoke` mode sends one harmless real prompt
   through that full native path and checks for a nonempty response. It requires
   `PI_MINI_SMOKE_DATA_DIR`; it is not part of routine tests because it consumes
   configured provider access. Native owner exit shuts down its backend.
 
-Verified locally: 13 application/transport tests (including the 5 scenarios),
-5 DOM tests, production web/host builds, native compilation/startup smoke, and
-one native real-model conversation whose response was `Ready.`. No screenshots,
-visual comparison, global-hotkey/background test or real Pi Chat handoff claimed.
+Verified locally: 13 application/transport tests (including the 5 conversation
+scenarios), 11 DOM/hook tests, production web/host builds, native compilation,
+startup smoke and all 3 approved native lifecycle scenarios. A real native-model
+smoke returned `Ready.`. The original spike's 3 regressions remain preserved.
+No screenshots, visual comparison or real Pi Chat handoff claimed. Handoff's 4
+unimplemented scenario drafts are retained separately and are not run or counted
+as passing coverage.
 
 `npm audit` reports 4 inherited Pi/server findings (3 moderate, 1 high, including
 minimatch/undici). No upstream dependency override or unrelated upgrade was made.

@@ -1,10 +1,14 @@
-# Remaining MVP: native lifecycle and Pi Chat handoff
+# Remaining MVP: native lifecycle; handoff deferred
 
-Status: proposed; executable drafts await explicit approval.
+Status: native lifecycle scenarios explicitly approved (“scenarios approved.
+implement”) and implemented locally. The user explicitly requested skipping
+Pi Chat handoff for now and doing it in the next step. No Pi Chat changes or
+handoff work are in the current implementation scope.
 
 The implemented first slice and its five approved conversation scenarios remain
-unchanged. This contract covers the remaining full-MVP outcomes, without another
-visual redesign. Approved mockup revision 6 remains the visual baseline.
+unchanged. The current scope is global shortcut/focus, hide/background behavior
+and explicit Quit cleanup, without another visual redesign. Approved mockup
+revision 6 remains the visual baseline; the session-title action stays disabled.
 
 ## Native lifecycle
 
@@ -25,7 +29,9 @@ native-boundary verification; a DOM key event is not evidence of a global shortc
 OS automation/accessibility limitations must be reported rather than replaced
 with passing fake assertions.
 
-## Session-and-control handoff
+## Session-and-control handoff — deferred to the next step
+
+The following proposal is retained for later review, not approved or in scope now.
 
 Keep the existing one-controller server/protocol and SDK unchanged. Do not add
 multi-controller behavior, a prose parser or a new response format.
@@ -73,14 +79,28 @@ that does not support this contract must not be treated as a successful handoff.
 
 ## Acceptance drafts and coverage
 
-`tests/companion/mvp-lifecycle.scenarios.test.mjs` covers global focus/hide/draft
-retention, background completion, title handoff to the same runtime, unsupported
-assets, launch failure with explicit recovery, missing targets, and Quit cleanup.
-Driver methods explicitly throw pending approval. Drafts are not included in
-`companion/npm test`, which runs only implemented coverage; this is not a skip
-or a claim that the full MVP passes.
+Current scope: `tests/companion/mvp-lifecycle.scenarios.test.mjs` has three approved scenarios:
+- Global shortcut shows/focuses; Escape preserves the session and composer draft.
+- Native window close hides; an agent run finishes in the background and is
+  visible on restoration without a duplicate submission.
+- Explicit Quit stops only the owned backend; normal Pi Chat remains unaffected.
 
-Before implementation, obtain approval of these actual scenario outcomes and
-this cross-application entry/control contract. Preserve them as durable examples
-after completing their drivers. No screenshots/visual automation without explicit
-permission; offer implemented-state comparison separately from behavioral tests.
+Deferred: `tests/companion/handoff.scenarios.test.mjs` retains the four handoff
+outcomes for the next step, including failure recovery and missing-target safety.
+No existing approved conversation scenario or implemented coverage was removed.
+
+The three native scenarios now have working drivers and run through
+`cd companion && npm run test:native` after building the native executable.
+Standard beforeEach/afterEach creates a fresh fixture and disposes it after each
+test, including failures. Real macOS shortcut and Cmd+Q event posting verifies
+those native boundaries; native window/WebView probes verify effects. Local
+Enter/Escape events and draft entry are dispatched inside the real WebView, not
+claimed as physical keyboard/text-entry coverage. No scenario assertion was
+weakened or skipped. Native tests are serial and require OS event-post permission.
+
+All three approved native scenarios and existing startup smoke pass locally.
+The four deferred handoff drafts still explicitly throw and are not part of
+implemented suites or reported passing coverage. Handoff's cross-application
+entry/control contract will receive separate approval in the next step.
+Preserve these executable scenarios. No screenshots/visual automation without
+explicit permission; offer implemented-state comparison separately from tests.

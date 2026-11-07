@@ -1,8 +1,9 @@
 # Pi Mini
 
 The real SDK-backed companion is in [companion/](companion/README.md).
-It implements the approved compact UI and the first conversation slice; global
-show/hide/background operation and real Pi Chat handoff are still pending.
+It implements the approved compact UI, real SDK conversations, and native
+shortcut/show/hide/background operation. Pi Chat handoff is deferred to the next
+step; its title action remains disabled.
 Run it with `cd companion && npm ci --include=dev && npm run dev`.
 
 The original spike and its existing regression tests are preserved below.

@@ -2,7 +2,8 @@
 
 Status: first-slice scenarios and backend isolation approved; first slice
 implemented locally. Mockup revision 6 explicitly approved for implementation.
-Native show/hide/background and real Pi Chat handoff remain subsequent slices.
+Native show/hide/background scenarios subsequently approved and implemented.
+Real Pi Chat handoff is explicitly deferred to the next step.
 
 ## Controller ownership
 
@@ -47,7 +48,9 @@ replacement produces a visible superseded state; taking control is explicit.
 
 ## Subsequent slices (not covered by these first-slice scenarios)
 
-1. Global Control+Option+Space, composer focus, Escape-to-hide, background lifecycle.
+1. Global Control+Option+Space, composer focus, Escape-to-hide, background lifecycle:
+   approved and implemented under `LIFECYCLE-HANDOFF.md` and the three native
+   scenarios in `tests/companion/mvp-lifecycle.scenarios.test.mjs`.
 2. Refine concise/guided instruction behavior using a real conversation.
 3. Explicit Open in Pi Chat session-and-control handoff. Requires a new Pi Chat
    entry contract for endpoint plus runtime/session reference and deliberate
@@ -60,7 +63,7 @@ replacement produces a visible superseded state; taking control is explicit.
 
 - Preserve compact always-on-top companion and dragging. User explicitly
   changed the design to fixed 360 × 380 with no resizing or collapse/expand.
-  Hide/restore must retain draft/session when that subsequent slice is added.
+  Hide/restore retains draft/session; close hides and explicit Quit shuts down.
 - Replace canned router progression and simulated replies with real responses.
 - Remove router-only step titles/count/dots and scripted router-start action.
 - Show latest **assistant** response rather than blindly showing the last
@@ -73,7 +76,7 @@ replacement produces a visible superseded state; taking control is explicit.
 
 ## Approval and evidence
 
-First-slice executable drafts: `tests/companion/conversation.scenarios.test.mjs`.
+First-slice executable scenarios: `tests/companion/conversation.scenarios.test.mjs`.
 All five approved scenarios now have working drivers using the published SDK
 and isolated real server with controlled runtime events. Catalogue tests also
 seed real Pi history and verify it is not visible in the companion. Additional
@@ -92,5 +95,10 @@ verified. The original revision 3 mockup remains unchanged as historical source.
 No browser automation or screenshots without permission for visual review.
 The first-slice title action is disabled rather than pretending to open Pi Chat;
 its actual application entry contract still belongs to the subsequent handoff
-slice. Global shortcut, Escape hiding, background operation, and handoff are not
-claimed as implemented.
+slice, explicitly deferred by the user. The native lifecycle scope was later
+approved (“scenarios approved. implement”) and implemented: three native scenarios
+pass, including actual OS global-shortcut/Quit effects, session/draft retention,
+background completion and owned cleanup. Local Enter/Escape events are exercised
+inside the real WebView, not claimed as physical keyboard-entry verification.
+Scenario fixture wrappers were replaced by beforeEach/afterEach as requested.
+No real Pi Chat handoff is claimed or implemented.
