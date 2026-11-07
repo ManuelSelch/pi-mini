@@ -24,7 +24,7 @@ export function ProjectSwitcher({ projects, busy, error, onSelect, onClose }: Pr
     if (event.key === 'ArrowUp') { event.preventDefault(); setSelected((current) => Math.max(current - 1, 0)); return; }
   }}>
     <div className="min-h-0 flex-1 overflow-y-auto px-[12px] py-[8px]" role="listbox" aria-label="Projects">
-      {options.map((project, optionIndex) => <button key={project.path} type="button" role="option" aria-selected={index === optionIndex} disabled={busy} onClick={() => onSelect(project.path)} className={`block w-full cursor-pointer border-0 bg-transparent px-[8px] py-[7px] text-left ${index === optionIndex ? 'text-accent' : 'text-ink'}`}>
+      {options.map((project, optionIndex) => <button key={project.path} type="button" role="option" aria-selected={index === optionIndex} disabled={busy} onClick={() => onSelect(project.path)} className={`block w-full cursor-pointer border-0 bg-transparent px-[8px] py-[7px] text-left hover:text-accent ${index === optionIndex ? 'text-accent' : 'text-ink'}`}>
         <span className="block text-[13px]">{project.name}</span>
       </button>)}
       {!options.length && <div className="px-[8px] py-[7px] text-[12px] text-muted">No projects found. Enter an absolute folder path.</div>}

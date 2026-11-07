@@ -17,6 +17,7 @@ test('filter and keyboard navigation select a project, while Escape cancels', ()
   assert.equal(input.getAttribute('placeholder'), 'Search');
   assert.equal(ui.queryByText(/Enter to open a new session/), null);
   assert.match(ui.getByRole('option', { name: 'Alpha' }).className, /bg-transparent/);
+  assert.match(ui.getByRole('option', { name: 'Beta' }).className, /hover:text-accent/);
   fireEvent.mouseEnter(ui.getByRole('option', { name: 'Beta' }));
   assert.equal(ui.getByRole('option', { name: 'Alpha' }).getAttribute('aria-selected'), 'true');
   assert.equal(ui.queryByText('/a'), null);
