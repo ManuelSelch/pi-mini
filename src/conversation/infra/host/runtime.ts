@@ -1,4 +1,4 @@
-import { mkdir, realpath } from 'node:fs/promises';
+import { mkdir, realpath, stat } from 'node:fs/promises';
 import { dirname, join, relative, isAbsolute } from 'node:path';
 import {
   createAgentSessionFromServices, createAgentSessionRuntime, createAgentSessionServices,
@@ -30,7 +30,7 @@ export async function createCompanionAgentRuntime(options: RuntimeOptions, manag
       services, diagnostics: services.diagnostics,
     };
   };
-  return createAgentSessionRuntime(factory, { cwd: options.projectPath, agentDir, sessionManager: manager });
+  return createAgentSessionRuntime(factory, { cwd: manager.getCwd(), agentDir, sessionManager: manager });
 }
 
 export function createCompanionRuntimeFactory(options: RuntimeOptions): RuntimeAdapterFactory {
@@ -46,9 +46,10 @@ export function createCompanionRuntimeFactory(options: RuntimeOptions): RuntimeA
     }
   };
   const create = async (projectPath: string) => {
-    if (await realpath(projectPath) !== options.projectPath) throw new Error('The companion only opens its configured workspace.');
+    const canonical = await realpath(projectPath);
+    if (!(await stat(canonical)).isDirectory()) throw new Error('Project path must be a directory.');
     await mkdir(options.sessionsDirectory, { recursive: true, mode: 0o700 });
-    return attach(SessionManager.create(options.projectPath, options.sessionsDirectory));
+    return attach(SessionManager.create(canonical, options.sessionsDirectory));
   };
   return {
     newSession: create,
@@ -60,7 +61,6 @@ export function createCompanionRuntimeFactory(options: RuntimeOptions): RuntimeA
       if (!child || child.startsWith('..') || isAbsolute(child)) throw new Error('Session is outside companion storage.');
       if (dirname(canonical) !== root) throw new Error('Session is outside companion storage.');
       const manager = SessionManager.open(canonical, options.sessionsDirectory);
-      if (await realpath(manager.getCwd()) !== options.projectPath) throw new Error('Session belongs to another workspace.');
       return attach(manager);
     },
   };

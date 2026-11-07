@@ -43,6 +43,11 @@ The app is produced at `src-tauri/target/release/bundle/macos/Pi Mini.app`; copy
   use the composer. Explicit selects require Submit. Cancel answers the actual
   pending prompt; stale/expired questions cannot be answered through the app.
 - Done / Explain / I’m stuck send ordinary messages, not required prompt answers.
+- Cmd+O opens the project switcher when the conversation is idle. Search known
+  projects or enter an absolute path (or `~/` path); arrows and Enter select a
+  folder and start a fresh session. Escape closes the switcher without hiding.
+  Switching is unavailable during a run or required question; a successful switch
+  clears the composer draft.
 - Stop aborts the run without closing its runtime or clearing the draft.
 - A replaced controller does not reconnect automatically. Take control is explicit.
 - Control+Option+Space shows/focuses the native window and composer from another
@@ -61,16 +66,18 @@ Native code starts one private loopback server on an ephemeral port. It never
 connects to or restarts the normal Pi Chat server. The native WebSocket adapter
 uses the SDK through Tauri's native socket plugin; the server's browser Origin
 checks remain intact. Frontend code accepts only the native-supplied loopback
-`/ws` endpoint, renders agent text as text, and receives no provider credentials.
+`/ws` endpoint, renders agent Markdown without raw HTML, and receives no provider credentials.
 
 The server can execute tools with your user permissions. This is not a sandbox
 or an authenticated network service. Keep it private/loopback.
 
 Companion data defaults to macOS Application Support under `com.piagent.mini`:
-separate `sessions/`, `projects.json`, and a default `workspace/`. Both history
-writes **and catalogue reads** are explicitly rooted there; setting only the
-server's `sessionsDirectory` is insufficient to isolate its default lister.
-`PI_MINI_PROJECT` selects an existing workspace instead. Providers, credentials,
+separate `sessions/`, `projects.json`, and a default `workspace/`. Session history
+writes and catalogue session reads are rooted there. At startup, project paths
+from normal Pi session history and Pi Chat's pinned projects are imported into
+Pi Mini's own project catalogue; normal transcript contents are not exposed in the
+catalogue. Existing Pi Mini project entries remain available. `PI_MINI_PROJECT`
+selects the initial workspace. Providers, credentials,
 settings, extensions and instructions use standard Pi discovery; authentication
 is reused through Pi, never copied into frontend or companion-local auth files.
 
@@ -103,8 +110,8 @@ specific combination, not all future SDK/server versions.
 - `src/conversation/ui/containers/`: state subscription and separate ordinary
   composer drafts versus question answers.
 - `src/lifecycle/app/`: native visibility/error listeners and composer-focus
-  requests. Escape only asks native code to hide; it never answers a prompt or
-  disposes conversation state. Listeners, including late registrations, are
+  requests. Escape closes the project switcher when open; otherwise it asks native
+  code to hide and never answers a prompt or disposes conversation state. Listeners, including late registrations, are
   released on unmount.
 - `scripts/prepare-bundle.sh` and `src-tauri/tauri.bundle.conf.json`: build the relocatable macOS app with its own Node executable, host and production modules. Release builds resolve them from app resources; debug builds use the checkout and `PI_MINI_NODE`.
 - `src-tauri/`: fixed native shell, global shortcut registration, close-to-hide,

@@ -1,7 +1,7 @@
-import { mkdir, realpath } from 'node:fs/promises';
+import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { once } from 'node:events';
-import { SessionManager } from '@earendil-works/pi-coding-agent';
+import { getAgentDir, SessionManager } from '@earendil-works/pi-coding-agent';
 import { createPiServer, type RuntimeAdapterFactory } from '@manuelselch/pi-server';
 import { createCompanionRuntimeFactory } from './runtime';
 
@@ -9,6 +9,23 @@ export interface HostOptions {
   dataDirectory: string;
   projectPath?: string;
   runtimeFactory?: RuntimeAdapterFactory;
+  discoverProjects?: boolean;
+}
+
+export async function importKnownProjects(metadataFile: string, agentDirectory = getAgentDir(), listSessions: () => Promise<readonly { cwd?: string }[]> = () => SessionManager.listAll()): Promise<void> {
+  const readMetadata = async (path: string): Promise<Record<string, unknown>> => {
+    try { return JSON.parse(await readFile(path, 'utf8')) as Record<string, unknown>; }
+    catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {}; throw error; }
+  };
+  const [normal, companion, sessions] = await Promise.all([
+    readMetadata(join(agentDirectory, 'pi-chat', 'projects.json')),
+    readMetadata(metadataFile),
+    listSessions(),
+  ]);
+  const paths = [...(Array.isArray(normal.pins) ? normal.pins : []), ...sessions.map((session) => session.cwd)];
+  const known = await Promise.all(paths.filter((path): path is string => typeof path === 'string').map((path) => realpath(path).catch(() => undefined)));
+  const pins = [...new Set([...(Array.isArray(companion.pins) ? companion.pins.filter((path): path is string => typeof path === 'string') : []), ...known.filter((path): path is string => Boolean(path))])];
+  await writeFile(metadataFile, JSON.stringify({ version: 1, archives: [], removedProjects: [], ...companion, pins }), { mode: 0o600 });
 }
 
 export async function startCompanionHost(options: HostOptions) {
@@ -19,13 +36,14 @@ export async function startCompanionHost(options: HostOptions) {
   const workspace = options.projectPath ?? join(dataDirectory, 'workspace');
   if (!options.projectPath) await mkdir(workspace, { recursive: true, mode: 0o700 });
   const projectPath = await realpath(workspace);
+  if (options.discoverProjects !== false) await importKnownProjects(join(dataDirectory, 'projects.json'));
   const server = createPiServer({
     runtimeFactory: options.runtimeFactory ?? createCompanionRuntimeFactory({ projectPath, sessionsDirectory }),
     catalogue: {
       sessionsDirectory, metadataFile: join(dataDirectory, 'projects.json'), homeDirectory: null,
       // sessionsDirectory configures archive storage, not the default history lister.
       // Supplying this explicitly prevents scans of the normal Pi Chat history.
-      lister: { listAll: () => SessionManager.list(projectPath, sessionsDirectory) },
+      lister: { listAll: () => SessionManager.listAll(sessionsDirectory) },
       discovery: { forDirectory: async () => undefined },
     },
   });

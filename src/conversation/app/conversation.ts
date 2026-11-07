@@ -17,7 +17,7 @@ export class Conversation {
   private previouslyReady = false;
   private ignoreRecoveredDraft = false;
 
-  constructor(readonly client: PiClient, readonly projectPath: string) {}
+  constructor(readonly client: PiClient, private projectPath: string) {}
 
   getView = (): ConversationView => this.view;
   subscribe = (listener: () => void): (() => void) => {
@@ -124,6 +124,20 @@ export class Conversation {
       this.submitting = false;
       this.synchronize(this.client.getState());
     }
+  }
+
+  async switchProject(path: string): Promise<boolean> {
+    if (!this.view.canSend || this.creating || this.disposed) return false;
+    const previous = this.selectedId;
+    return this.submit(async () => {
+      const next = await this.client.createSession(path);
+      if (this.disposed) return;
+      this.selectedId = next;
+      this.projectPath = path;
+      this.usefulResponse = '';
+      this.ignoreRecoveredDraft = false;
+      if (previous) await this.client.closeSession(previous).catch(() => {});
+    });
   }
 
   send(text: string): Promise<boolean> {
