@@ -13,7 +13,6 @@ export function Companion() {
   const demo = useDemoSession();
   const full = new URLSearchParams(location.search).get('view') === 'pi-chat';
   const [collapsed, setCollapsed] = useState(false);
-  const [history, setHistory] = useState(false);
   const [error, setError] = useState('');
   const [resizing, setResizing] = useState(false);
   const [handoff, setHandoff] = useState(false);
@@ -43,11 +42,11 @@ export function Companion() {
   if (full) return <><FullChatPreview {...demo} onSend={demo.send} onStop={demo.cancel} onStartRouter={demo.startRouter} onNew={demo.newChat} onError={reportError}/>{error && <div className="error-banner" role="alert">{error}</div>}</>;
   return <div className={'companion-shell' + (collapsed ? ' collapsed' : '') + (!native ? ' browser-shell' : '')}>
     <WindowHeader title={demo.session.title} collapsed={collapsed} busy={demo.busy} opening={handoff} onCollapse={() => void changeSize(true)} onExpand={() => void changeSize(false)} onOpenChat={() => void openChat()} onError={reportError}/>
-    {!collapsed && <>
+    <div className="companion-content" hidden={collapsed}>
       {error && <div className="error-banner" role="alert">{error}</div>}
-      <Conversation {...demo} history={history} onHistory={() => setHistory(!history)} onSend={demo.send} onStartRouter={demo.startRouter}/>
+      <Conversation {...demo} onSend={demo.send} onStartRouter={demo.startRouter}/>
       <Composer busy={demo.busy} onSend={demo.send} onStop={demo.cancel}/>
-    </>}
+    </div>
     {!collapsed && <ResizeHandles onError={reportError}/>}
     {!native && <div className="browser-note"><IconSparkles size={12}/>Browser preview · native window controls work in Tauri</div>}
   </div>;

@@ -4,6 +4,7 @@ import { LogicalSize, PhysicalPosition } from '@tauri-apps/api/dpi';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { emit } from '@tauri-apps/api/event';
 import type { Session } from './demo';
+import { bottomRightPosition } from './collapse-geometry';
 
 export const native = isTauri();
 export async function dragWindow() {
@@ -21,7 +22,8 @@ export async function resizeCompanion(collapsed: boolean) {
   await win.setResizable(true);
   await win.setMinSize(new LogicalSize(280, 44));
   await win.setSize(target);
-  await win.setPosition(new PhysicalPosition(Math.round(position.x + size.width - target.width * scale), position.y));
+  const anchor = bottomRightPosition(position, size, target, scale);
+  await win.setPosition(new PhysicalPosition(anchor.x, anchor.y));
   if (!collapsed) await win.setMinSize(new LogicalSize(320, 320));
   await win.setResizable(!collapsed);
 }

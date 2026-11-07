@@ -1,6 +1,6 @@
 # Pi companion clickdummy
 
-Revision: 2
+Revision: 3
 Status: in review — no production implementation approved.
 
 ## Goal and scope
@@ -21,21 +21,27 @@ Default companion 360 × 380 logical pixels; resizable down to 320 × 320.
 content surface. The slim header contains only the conversation title, an
 icon-only Pi Chat handoff action (accessible name + hover title), and collapse.
 No logo, product title, demo/guided badge, pin toggle, overflow menu, dedicated
-handoff row, or composer footer text. The send/stop icon remains functional.
+handoff row, composer footer text, send-arrow icon, or compact history control.
+Composer placeholder is “Ask…” with a neutral gray focus border; Enter sends.
+Only a stop icon appears while a simulated reply is pending.
 User explicitly requested this compact revision; review is still ongoing.
 
 ## Interactions and review states
 
 - Default `/companion/`: router-setup guided session. Show the latest message,
-  one step, contextual quick replies, and earlier conversation on demand.
+  one step and contextual quick replies. Earlier messages are not shown in
+  the companion; they remain in memory and appear in the full Pi Chat preview.
 - `/companion/?state=empty`: empty conversation. Start scripted router setup
   or send free text for an explicitly simulated reply.
 - Send free text with Enter; Shift+Enter inserts a newline. Simulated thinking
   lasts 650 ms; Stop cancels that pending reply.
 - Companion is always pinned; there is no unpin control. Drag header to move;
   drag edges to resize.
-- Collapse to a 280 × 44 strip, preserving the right edge; expand restores size.
-  Session and composer state survive collapse. Collapsed resizing is disabled.
+- Collapse to a 280 × 44 strip, preserving the bottom-right corner. Shrink
+  down/right; expand up/left to the previous size. This also preserves the
+  collapsed window's new bottom-right anchor if it was moved. Browser preview
+  is bottom-right anchored too. Session and composer draft survive collapse;
+  the content remains mounted but hidden. Collapsed resizing is disabled.
 - Overflow menu removed as requested. Start a new conversation from the larger
   mock Pi Chat window (or reload the empty-state URL in the browser). Quit the
   native app with Cmd+Q; collapse remains directly available.
@@ -78,9 +84,13 @@ when implementing; mock approval does not authorize dropping existing journeys.
 
 ## Review
 
-Main questions: Is this footprint comfortable? Is latest-answer-plus-history
-enough? Does collapse help? Does switching to a larger conversation feel natural?
+Main questions: Is this footprint comfortable? Is the latest message enough
+without local history, or is opening Pi Chat preferable? Does bottom-right collapse
+help? Does switching to a larger conversation feel natural?
 No production scenario or design approval is inferred from the spike approval.
+Bottom-right geometry has three automated unit checks covering collapse,
+expansion, and Retina/negative-monitor coordinates. These validate calculations,
+not actual native movement. Run: `node --test companion/collapse-geometry.test.ts`.
 TypeScript, Vite production compilation, native app bundling, Rust formatting,
 npm dependency audit, and HTTP/module-serving checks passed. Native app launched
 for user-led review. Native interactions and appearance have not been automated

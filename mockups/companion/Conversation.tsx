@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Button, Loader, UnstyledButton } from '@mantine/core';
-import { IconCheck, IconChevronDown, IconChevronRight, IconSparkles } from '@tabler/icons-react';
+import { IconCheck, IconSparkles } from '@tabler/icons-react';
 import { steps, type Message, type Session } from './demo';
 
 export function MessageList({ messages }: { messages: Message[] }) {
@@ -10,15 +10,14 @@ export function MessageList({ messages }: { messages: Message[] }) {
   </div>)}</div>;
 }
 
-type Props = { session: Session; busy: boolean; history: boolean; onHistory: () => void; onSend: (text: string) => void; onStartRouter: () => void; full?: boolean };
-export function Conversation({ session, busy, history, onHistory, onSend, onStartRouter, full }: Props) {
+type Props = { session: Session; busy: boolean; onSend: (text: string) => void; onStartRouter: () => void; full?: boolean };
+export function Conversation({ session, busy, onSend, onStartRouter, full }: Props) {
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (full) scroller.current?.scrollTo({ top: scroller.current.scrollHeight });
   }, [session.messages.length, busy, full]);
   const messages = session.messages;
   const latest = messages.at(-1);
-  const earlier = messages.slice(0, -1);
   const step = steps[session.step];
   if (!messages.length) return <main className="empty-conversation">
     <span className="empty-spark"><IconSparkles size={25} stroke={1.4}/></span>
@@ -28,10 +27,6 @@ export function Conversation({ session, busy, history, onHistory, onSend, onStar
     <span className="empty-note">A conversation, not another workspace.</span>
   </main>;
   return <main className={'conversation ' + (full ? 'full-conversation' : '')} ref={scroller}>
-    {!full && earlier.length > 0 && <>
-      <UnstyledButton className="history-toggle" onClick={onHistory}>{history ? <IconChevronDown size={13}/> : <IconChevronRight size={13}/>} Earlier conversation <span>{earlier.length}</span></UnstyledButton>
-      {history && <div className="earlier"><MessageList messages={earlier}/></div>}
-    </>}
     {session.guided && !full && <div className="step-heading">
       <span>{step ? 'STEP ' + (session.step + 1) + ' OF 4' : 'COMPLETE'}</span>
       <span className="step-dots">{steps.map((_, i) => <i key={i} className={i <= session.step ? 'active' : ''}/>)}</span>

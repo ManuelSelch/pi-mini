@@ -9,14 +9,13 @@ body { margin: 0; color: var(--text); font-size: 13px; }
 button, input, textarea { font-family: inherit; }
 button { -webkit-app-region: no-drag; }
 .companion-shell { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #494949; border-radius: 16px; background: var(--page); }
+.companion-content { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.companion-content[hidden] { display: none; }
 .window-header { flex-shrink: 0; height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 10px 0 16px; cursor: grab; user-select: none; }
 .session-title { flex: 1; min-width: 0; font-size: 11px; font-weight: 500; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .header-actions { display: flex; gap: 3px; align-items: center; }
 .header-actions .mantine-ActionIcon-root { width: 25px; height: 25px; min-width: 25px; }
-.conversation { flex: 1; overflow-y: auto; padding: 0 18px 12px; min-height: 0; scrollbar-width: thin; }
-.history-toggle { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); margin: 2px 0 15px; }
-.history-toggle > span { font-size: 9px; margin-left: 3px; padding: 0 4px; border-radius: 3px; background: var(--panel); }
-.earlier { border-left: 1px solid var(--border); padding: 0 0 0 10px; margin: -8px 0 20px; }
+.conversation { flex: 1; overflow-y: auto; padding: 8px 18px 12px; min-height: 0; scrollbar-width: thin; }
 .step-heading { display: flex; align-items: center; justify-content: space-between; font-size: 9px; letter-spacing: 1.1px; color: var(--accent); margin-bottom: 7px; }
 .step-dots { display: flex; gap: 4px; }
 .step-dots i { width: 16px; height: 3px; background: var(--border); border-radius: 5px; }
@@ -35,11 +34,11 @@ button { -webkit-app-region: no-drag; }
 .demo-label { opacity: .7; font-size: 9px; }
 .composer-wrap { padding: 5px 11px 11px; flex-shrink: 0; }
 .composer { display: flex; align-items: flex-end; gap: 7px; padding: 7px 8px 7px 11px; background: #2d2d2d; border: 1px solid #484848; border-radius: 11px; }
-.composer:focus-within { border-color: #5686ac; }
+.composer:focus-within { border-color: #737373; }
 .composer .mantine-Textarea-root { flex: 1; min-width: 0; }
 .composer textarea { font-size: 11px; line-height: 1.55; min-height: 27px; padding-top: 4px; color: #e0e0e0; }
 .composer textarea::placeholder { color: #a2a2a2; }
-.send-button { margin-bottom: 1px; flex-shrink: 0; }
+.stop-button { margin-bottom: 1px; flex-shrink: 0; }
 .collapsed .window-header { border-bottom: 0; height: 100%; padding: 0 13px; gap: 10px; }
 .collapsed-title { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .collapsed-title strong { font-size: 11px; font-weight: 500; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -85,8 +84,8 @@ button { -webkit-app-region: no-drag; }
 .resize-handle.NorthWest, .resize-handle.SouthWest { left: 0; }
 .resize-handle.NorthEast, .resize-handle.SouthWest { cursor: nesw-resize; }
 .resize-handle.NorthWest, .resize-handle.SouthEast { cursor: nwse-resize; }
-body:has(.browser-shell) { background: #17191c; display: grid; place-items: center; min-height: 100dvh; }
-.browser-shell { width: 360px; height: 380px; background: var(--page); box-shadow: 0 24px 90px #0006; position: relative; }
+body:has(.browser-shell) { background: #17191c; min-height: 100dvh; }
+.browser-shell { width: 360px; height: 380px; background: var(--page); box-shadow: 0 24px 90px #0006; position: fixed; bottom: 24px; right: 24px; }
 .browser-shell.collapsed { width: 280px; height: 44px; }
 .browser-shell .browser-note { display: flex; align-items: center; gap: 5px; position: fixed; bottom: 20px; left: 20px; color: #989898; font-size: 10px; }
 @media (max-width: 720px) {
@@ -94,4 +93,4 @@ body:has(.browser-shell) { background: #17191c; display: grid; place-items: cent
   .preview-brand .mantine-Badge-root { display: none; }
   .preview-banner { flex-wrap: wrap; gap: 3px; padding: 9px 16px; }
 }
-@media (max-width: 380px) { .browser-shell { width: min(360px, 100vw); } }
+@media (max-width: 400px) { .browser-shell { right: 8px; bottom: 8px; width: min(360px, calc(100vw - 16px)); } }

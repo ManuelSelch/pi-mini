@@ -30,7 +30,7 @@ export function FullChatPreview(p: Props) {
     <section className="preview-main">
       <div className="preview-banner"><span>Handoff preview · same demo conversation in both windows</span><Button variant="subtle" size="compact-xs" leftSection={<IconArrowLeft size={12}/>} onClick={() => void back().catch(p.onError)}>Back to companion</Button></div>
       <div className="preview-title"><span className="eyebrow">FROM PI COMPANION</span><h1>{p.session.title}</h1><span className="session-reference">Session {p.session.id.slice(0, 8)} · simulated session identity</span></div>
-      <Conversation session={p.session} busy={p.busy} history={true} onHistory={() => {}} onSend={p.onSend} onStartRouter={p.onStartRouter} full/>
+      <Conversation session={p.session} busy={p.busy} onSend={p.onSend} onStartRouter={p.onStartRouter} full/>
       <Composer busy={p.busy} onSend={p.onSend} onStop={p.onStop} full/>
     </section>
   </div>;
