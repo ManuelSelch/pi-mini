@@ -1,0 +1,32 @@
+.mvp-shell .window-header { cursor: default; }
+.mvp-status { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; padding: 0 18px 12px; flex-shrink: 0; }
+.mvp-status i { width: 5px; height: 5px; background: #818f83; border-radius: 50%; flex-shrink: 0; }
+.mvp-status.error i { background: #e59b95; }
+.mvp-status.superseded i, .mvp-status.transferred i { background: #b7a079; }
+.mvp-status > span { overflow-wrap: anywhere; }
+.mvp-conversation { padding-top: 2px; }
+.mvp-conversation > .message-text { font-size: 13px; line-height: 1.7; }
+.follow-up-actions { margin-top: 20px; }
+.inline-question { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 13px; }
+.question-caption { font-size: 8px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+.question-title { color: #dedede; font-size: 12px; line-height: 1.6; margin-bottom: 10px; }
+.cancel-question { font-size: 9px; margin-top: 9px; margin-left: -5px; }
+.mvp-empty { padding: 24px 0; }
+.mvp-empty p { font-size: 12px; color: var(--muted); }
+.control-notice { font-size: 11px; line-height: 1.6; padding: 0 18px 12px; flex-shrink: 0; }
+.control-notice p { margin-top: 0; }
+.handoff-confirm p { font-size: 12px; line-height: 1.7; }
+.handoff-reference { color: var(--muted); font-size: 10px !important; }
+.handoff-confirm h1 { font-size: 17px; margin-bottom: 9px; }
+.handoff-confirm .quick-actions { margin-top: 17px; }
+.transferred-actions { padding-top: 7px; }
+.review-controls { padding: 28px; max-width: 420px; display: flex; flex-direction: column; gap: 8px; }
+.review-controls > strong { font-size: 14px; color: #e0e0e0; font-weight: 500; }
+.review-controls > span, .review-controls p { font-size: 11px; color: var(--muted); line-height: 1.7; }
+.review-controls > div { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 9px 0; }
+.review-controls a { font-size: 11px; color: #aaa; text-underline-offset: 4px; }
+.review-controls a[aria-current='page'] { color: var(--accent); }
+.review-notice { border-top: 1px solid var(--border); padding-top: 10px; }
+.restore-companion { position: fixed; bottom: 24px; right: 24px; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 800px) { .review-controls { max-width: 100%; padding: 20px; padding-bottom: 430px; } }

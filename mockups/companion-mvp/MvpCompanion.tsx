@@ -1,0 +1,124 @@
+import { useEffect, useRef, useState } from 'react';
+import { ActionIcon, Button, Loader, Textarea } from '@mantine/core';
+import { IconArrowUpRight, IconChevronDown, IconChevronUp, IconPlayerStop } from '@tabler/icons-react';
+import { MvpConversation, type Prompt } from './MvpConversation';
+
+type State = 'idle' | 'thinking' | 'running' | 'select' | 'confirm' | 'input' | 'error' | 'reconnecting' | 'superseded' | 'handoff' | 'transferred' | 'empty';
+const states: State[] = ['idle', 'thinking', 'running', 'select', 'confirm', 'input', 'error', 'reconnecting', 'superseded', 'handoff', 'transferred', 'empty'];
+const initial = new URLSearchParams(location.search).get('state');
+const initialState: State = states.includes(initial as State) ? initial as State : 'idle';
+const answer = 'Join the router’s Wi-Fi using the network name on its label.\n\nKeep the password private.';
+const prompts: Partial<Record<State, Prompt>> = {
+  select: { kind: 'select', title: 'How are you connecting?', options: ['Wi-Fi', 'Ethernet', 'Not sure'] },
+  confirm: { kind: 'confirm', title: 'May I check your network settings?' },
+  input: { kind: 'input', title: 'What model is your router?' },
+};
+
+export function MvpCompanion() {
+  const [state, setState] = useState<State>(initialState);
+  const [text, setText] = useState(initialState === 'empty' ? '' : answer);
+  const [draft, setDraft] = useState('');
+  const [collapsed, setCollapsed] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [notice, setNotice] = useState('');
+  const composer = useRef<HTMLTextAreaElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prompt = prompts[state];
+  const busy = state === 'thinking' || state === 'running';
+  const inactive = ['reconnecting', 'superseded', 'handoff', 'transferred'].includes(state);
+  const canSend = !busy && !inactive;
+  const status = prompt ? 'Waiting for your answer' : ({
+    idle: 'Ready', thinking: 'Thinking…', running: 'Running · checking connection', error: 'Reply failed',
+    reconnecting: 'Reconnecting…', superseded: 'Control moved to another app', handoff: 'Ready to hand off',
+    transferred: 'Pi Chat has control', empty: 'Ready',
+  } as Partial<Record<State, string>>)[state];
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  useEffect(() => {
+    if (!hidden && !collapsed && !inactive) composer.current?.focus();
+  }, [hidden, collapsed, inactive, prompt?.kind]);
+  useEffect(() => {
+    const key = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); setHidden(true); }
+      if (event.code === 'Space' && event.ctrlKey && event.altKey) {
+        event.preventDefault(); setHidden((value) => !value);
+      }
+    };
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  }, []);
+
+  const send = (message: string) => {
+    if (!message.trim() || !canSend || prompt?.kind === 'select' || prompt?.kind === 'confirm') return;
+    if (prompt) {
+      setNotice('Required answer submitted · simulated prompt.answer');
+      setState('idle');
+      setDraft('');
+      return;
+    }
+    setNotice(`Normal user message: “${message}” · simulated`);
+    setDraft('');
+    setState('thinking');
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      setText(message === 'Explain'
+        ? 'Your laptop needs to be on the router’s own network to reach its local setup page. The internet does not need to be working yet.\n\nDo not share the password here.'
+        : 'This is a visual prototype, not a live agent response. Your message would be sent normally in the real companion.');
+      setState('idle');
+    }, 900);
+  };
+  const answerQuestion = (value: string) => {
+    setNotice(`Required ${value === 'Cancel' ? 'cancellation' : 'answer'} submitted · simulated prompt.answer`);
+    setState('idle');
+    setDraft('');
+  };
+  const stop = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    setState('idle');
+    setNotice('Stopped · response and session retained');
+  };
+
+  return <>
+    <aside className="review-controls" aria-label="Prototype states">
+      <strong>MVP interface review</strong>
+      <span>Simulated states · no SDK or backend</span>
+      <div>{states.map((value) => <a key={value} href={'?state=' + value} aria-current={state === value ? 'page' : undefined}>{value}</a>)}</div>
+      <p>Escape hides. ⌃⌥Space toggles while this page is focused.<br/>Global/background behavior requires the native app.</p>
+      {notice && <p className="review-notice" role="status">{notice}</p>}
+    </aside>
+    {hidden ? <Button className="restore-companion" variant="default" onClick={() => setHidden(false)}>Show companion · ⌃⌥Space</Button>
+      : <div className={'companion-shell browser-shell mvp-shell' + (collapsed ? ' collapsed' : '')}>
+        <header className="window-header">
+          <strong className="session-title">{initialState === 'empty' ? 'New conversation' : 'Router setup'}</strong>
+          <div className="header-actions">
+            {!collapsed && <ActionIcon variant="subtle" color="gray" aria-label="Open in Pi Chat" title="Open in Pi Chat" disabled={busy || Boolean(prompt) || inactive} onClick={() => setState('handoff')}><IconArrowUpRight size={16}/></ActionIcon>}
+            <ActionIcon variant="subtle" color="gray" aria-label={collapsed ? 'Expand companion' : 'Collapse companion'} onClick={() => setCollapsed(!collapsed)}>{collapsed ? <IconChevronUp size={15}/> : <IconChevronDown size={15}/>}</ActionIcon>
+          </div>
+        </header>
+        <div className="companion-content" hidden={collapsed}>
+          <div className={'mvp-status ' + state} role="status" aria-live="polite">
+            {busy || state === 'reconnecting' ? <Loader size={10}/> : <i/>}<span>{status}</span>
+          </div>
+          {state === 'error' && <div className="error-banner" role="alert">Provider unavailable. Your last response is still here. Try sending again.</div>}
+          {state === 'superseded' && <div className="control-notice"><p>Another app has control. Reconnect only when you want to take it back.</p><Button variant="default" size="compact-xs" onClick={() => { setState('idle'); setNotice('Explicit takeover · simulated'); }}>Take control</Button></div>}
+          {state === 'handoff' ? <main className="conversation handoff-confirm">
+            <h1>Continue in Pi Chat?</h1>
+            <p>The same conversation will open there. Pi Chat will take control; this companion will pause.</p>
+            <p className="handoff-reference">Router setup · session a7c21e8f</p>
+            <div className="quick-actions"><Button size="compact-xs" onClick={() => { setState('transferred'); setNotice('Handoff simulated only. Real Pi Chat needs a new session-opening entry contract.'); }}>Open & transfer control</Button><Button size="compact-xs" variant="default" onClick={() => setState('idle')}>Cancel</Button></div>
+          </main> : <MvpConversation text={text} prompt={prompt} canSend={canSend} onAnswer={answerQuestion} onSend={send}/>}
+          {state === 'transferred' && <div className="control-notice transferred-actions"><Button variant="default" size="compact-xs" onClick={() => { setState('idle'); setNotice('Explicit return of control · simulated'); }}>Take control here</Button></div>}
+          <div className="composer-wrap">
+            <div className="composer">
+              <Textarea ref={composer} aria-label={prompt?.kind === 'input' ? prompt.title : 'Message Pi'} placeholder={prompt?.kind === 'input' ? 'Your answer…' : 'Ask…'} disabled={inactive || prompt?.kind === 'select' || prompt?.kind === 'confirm'} autosize minRows={1} maxRows={3} variant="unstyled" value={draft} onChange={(e) => setDraft(e.currentTarget.value)} onKeyDown={(e) => {
+                if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return;
+                e.preventDefault(); send(draft);
+              }}/>
+              {busy && <ActionIcon className="stop-button" variant="subtle" color="gray" radius="md" size={24} aria-label="Stop reply" onClick={stop}><IconPlayerStop size={13}/></ActionIcon>}
+            </div>
+          </div>
+        </div>
+      </div>}
+  </>;
+}
