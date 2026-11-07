@@ -17,6 +17,13 @@ pub fn show_and_focus(app: &tauri::AppHandle) -> Result<(), String> {
         .get_webview_window("main")
         .ok_or("Companion window is unavailable")?;
     window.show().map_err(|error| error.to_string())?;
+    #[cfg(target_os = "macos")]
+    app.run_on_main_thread(|| {
+        if let Some(main) = objc2::MainThreadMarker::new() {
+            #[allow(deprecated)]
+            objc2_app_kit::NSApplication::sharedApplication(main).activateIgnoringOtherApps(true);
+        }
+    }).map_err(|error| error.to_string())?;
     window.set_focus().map_err(|error| error.to_string())?;
     // Window focus alone does not make WKWebView the native keyboard responder.
     let webview: &tauri::Webview = window.as_ref();
@@ -45,7 +52,7 @@ pub fn lifecycle_error(state: tauri::State<'_, LifecycleState>) -> Result<Option
 pub fn register(app: &tauri::AppHandle) {
     let shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Space);
     if let Err(error) = app.global_shortcut().register(shortcut) {
-        report_error(app, format!("Cannot register Control+Option+Space: {error}. Restore Pi Mini from the Dock instead."));
+        report_error(app, format!("Cannot register Control+Option+Space: {error}. Restore Pi Mini from the menu bar instead."));
     }
 }
 

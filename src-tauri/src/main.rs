@@ -1,4 +1,5 @@
 mod lifecycle;
+mod menu_bar;
 mod native_test;
 
 use serde::{Deserialize, Serialize};
@@ -173,6 +174,9 @@ fn main() {
         ])
         .setup(|app| {
             app.set_menu(tauri::menu::Menu::default(app.handle())?)?;
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            menu_bar::install(app.handle())?;
             lifecycle::register(app.handle());
             let directory = if smoke_requested() {
                 PathBuf::from(

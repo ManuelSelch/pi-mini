@@ -44,9 +44,9 @@ Do not move the checkout after building without rebuilding the native executable
   app; pressing it while Pi Mini has focus hides the window.
 - Escape and native window close hide, preserving draft/session and ongoing work.
   A response can finish while hidden; restoring shows the latest useful answer.
-- Cmd+Q explicitly quits and stops only the companion-owned backend. The Dock's
-  reopen action also restores the window. A shortcut-registration failure is
-  shown as plain red error text; use the Dock if that shortcut is unavailable.
+- Pi Mini lives in the macOS menu bar as π, not in the Dock or app switcher.
+  Use Show Pi Mini to restore it or Quit Pi Mini to stop its owned backend.
+  Cmd+Q also quits while focused. If shortcut registration fails, use the menu bar.
 - The session title's Pi Chat action is deliberately disabled until the real
   handoff entry contract exists. No mock destination or transcript-copy shortcut.
 
@@ -102,7 +102,7 @@ specific combination, not all future SDK/server versions.
   disposes conversation state. Listeners, including late registrations, are
   released on unmount.
 - `src-tauri/`: fixed native shell, global shortcut registration, close-to-hide,
-  Dock reopen, and explicit Quit lifecycle ownership of its Node child. Window
+  menu bar recovery, accessory activation, and explicit Quit lifecycle ownership of its Node child. Window
   and native WebView keyboard focus are restored before requesting composer
   focus. Hidden windows stay mounted/connected. Parent stdin EOF requests
   graceful backend shutdown; forced termination is restricted to the owned
@@ -133,6 +133,9 @@ npm run test:native
   server and real Pi runtime. It asserts SDK readiness, runtime creation and
   fixed dimensions/non-resizability without sending a model message. It reuses
   normal provider/resource configuration but uses disposable history/workspace.
+- Native menu bar scenarios are at `tests/companion/menu-bar.scenarios.test.mjs`.
+  They use Accessibility and synthetic keyboard input and require an idle desktop;
+  concurrent user interaction can interfere with them.
 - Three approved native lifecycle scenarios are at
   `tests/companion/mvp-lifecycle.scenarios.test.mjs`. They use the real native
   window/WebView, SDK, sidecar and server with a controlled test-only agent (no
@@ -142,8 +145,8 @@ npm run test:native
   DOM focus, session/backend identity, draft retention, background completion,
   single submission and owned-process/listener shutdown. Input drafts and local
   Enter/Escape events are driven inside the real WebView; these are not evidence
-  of physical text entry or physical Escape-key delivery. Dock reopen is source
-  inspected, not separately automated. No screenshot or visual fidelity claim.
+  of physical text entry or physical Escape-key delivery. No screenshot or visual
+  fidelity claim.
   Scenarios use standard beforeEach/afterEach with a fresh driver and guaranteed
   teardown, not per-scenario wrapper helpers.
 - Native scenarios run serially because they temporarily change foreground focus
@@ -157,10 +160,11 @@ npm run test:native
   `PI_MINI_SMOKE_DATA_DIR`; it is not part of routine tests because it consumes
   configured provider access. Native owner exit shuts down its backend.
 
-Verified locally: 13 application/transport tests (including the 5 conversation
-scenarios), 11 DOM/hook tests, production web/host builds, native compilation,
-startup smoke and all 3 approved native lifecycle scenarios. A real native-model
-smoke returned `Ready.` before the repository restructure.
+Earlier verification covered 13 application/transport tests, 11 DOM/hook tests,
+production builds, startup smoke and the three original lifecycle scenarios. The
+menu bar change builds, but its latest native suite had focus/menu interaction
+failures while the desktop was in use; the user reports manual testing works.
+A real native-model smoke returned `Ready.` before the repository restructure.
 No screenshots, visual comparison or real Pi Chat handoff claimed. Handoff's 4
 unimplemented scenario drafts are retained separately and are not run or counted
 as passing coverage.

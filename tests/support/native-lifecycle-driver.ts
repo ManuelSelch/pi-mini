@@ -114,6 +114,12 @@ export class RemainingMvpDriver {
       return report.draft === text && report.draftState === text;
     }, 'composer draft entered');
   }
+  async showCompanionFromMenuBar(): Promise<void> { this.input('menu-show', this.child!.pid); }
+  async expectMenuBarPresenceWithoutDockOrAppSwitcher(): Promise<void> { this.input('presence', this.child!.pid); }
+  async quitCompanionFromMenuBar(): Promise<void> {
+    this.input('menu-quit', this.child!.pid);
+    await this.until(() => this.exited, 'menu bar Quit exited', true);
+  }
   async pressEscape(): Promise<void> { await this.command('escape'); }
   async expectCompanionHidden(): Promise<void> { await this.until(async () => (await this.command('probe')).visible === false, 'native window hidden'); }
   async switchToAnotherApplication(): Promise<void> {
