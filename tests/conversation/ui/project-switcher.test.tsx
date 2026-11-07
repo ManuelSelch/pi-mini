@@ -12,6 +12,9 @@ test('filter and keyboard navigation select a project, while Escape cancels', ()
   let closed = 0;
   const ui = render(<MantineProvider><ProjectSwitcher projects={[{ name: 'Alpha', path: '/a' }, { name: 'Beta', path: '/b' }]} busy={false} onSelect={(path) => selected.push(path)} onClose={() => { closed++; }}/></MantineProvider>);
   const input = ui.getByRole('textbox', { name: 'Search projects' });
+  assert.equal(input.getAttribute('placeholder'), 'Search');
+  assert.equal(ui.queryByText(/Enter to open a new session/), null);
+  assert.match(ui.getByRole('option', { name: 'Alpha' }).className, /bg-transparent/);
   assert.equal(ui.queryByText('/a'), null);
   assert.equal(ui.queryByText('/b'), null);
   fireEvent.change(input, { target: { value: 'beta' } });

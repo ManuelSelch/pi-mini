@@ -26,14 +26,13 @@ export function ProjectSwitcher({ projects, busy, error, onSelect, onClose }: Pr
     if (event.key === 'ArrowUp') { event.preventDefault(); setSelected((current) => Math.max(current - 1, 0)); return; }
     if (event.key === 'Enter' && options[index] && !busy) { event.preventDefault(); onSelect(options[index].path); }
   }}>
-    <TextInput ref={input} aria-label="Search projects" placeholder="Search projects or enter a folder path" value={query} disabled={busy} onChange={(event) => { setQuery(event.currentTarget.value); setSelected(0); }}/>
+    <TextInput ref={input} aria-label="Search projects" placeholder="Search" value={query} disabled={busy} onChange={(event) => { setQuery(event.currentTarget.value); setSelected(0); }}/>
     <div className="min-h-0 flex-1 overflow-y-auto py-[8px]" role="listbox" aria-label="Projects">
-      {options.map((project, optionIndex) => <button key={project.path} type="button" role="option" aria-selected={index === optionIndex} disabled={busy} onMouseEnter={() => setSelected(optionIndex)} onClick={() => onSelect(project.path)} className={`block w-full rounded-[6px] px-[8px] py-[7px] text-left ${index === optionIndex ? 'bg-panel' : ''}`}>
+      {options.map((project, optionIndex) => <button key={project.path} type="button" role="option" aria-selected={index === optionIndex} disabled={busy} onMouseEnter={() => setSelected(optionIndex)} onClick={() => onSelect(project.path)} className={`block w-full cursor-pointer border-0 bg-transparent px-[8px] py-[7px] text-left ${index === optionIndex ? 'text-accent' : 'text-ink'}`}>
         <span className="block text-[13px]">{project.name}</span>
       </button>)}
       {!options.length && <div className="px-[8px] py-[7px] text-[12px] text-muted">No projects found. Enter an absolute folder path.</div>}
     </div>
     {error && <div role="alert" className="text-[12px] text-failure">{error}</div>}
-    <div className="text-[11px] text-muted">Enter to open a new session · Esc to cancel</div>
   </div>;
 }
