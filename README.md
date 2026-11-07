@@ -23,10 +23,15 @@ npm run build:native
 ./src-tauri/target/debug/pi-mini
 ```
 
-This is a local development executable, not a relocatable, signed or notarized
-application. Node and this checkout's installed dependencies/compiled host remain
-required. `PI_MINI_NODE` can select a Node executable when `node` is not on PATH.
-Do not move the checkout after building without rebuilding the native executable.
+The development executable requires Node and this checkout's installed dependencies/compiled host. `PI_MINI_NODE` can select a Node executable when `node` is not on PATH. Do not move the checkout after building without rebuilding the development executable.
+
+To build a relocatable macOS app for the current machine's architecture:
+
+```sh
+npm run build:app
+```
+
+The app is produced at `src-tauri/target/release/bundle/macos/Pi Mini.app`; copy it to `/Applications` to install it. It bundles a checksum-verified official Node 22.22.1 runtime and production dependencies, and does not need the checkout or a system Node to start. Building downloads Node and npm packages. The build is not Developer ID signed or notarized, so macOS Gatekeeper may require explicit permission to open it. Provider configuration and credentials still come from the user's Pi installation; external tools and extensions may have their own dependencies.
 
 - Fixed 360 × 380, always on top; drag the unused header area to move it.
 - Type a message and press Enter; Shift+Enter inserts a newline.
@@ -101,6 +106,7 @@ specific combination, not all future SDK/server versions.
   requests. Escape only asks native code to hide; it never answers a prompt or
   disposes conversation state. Listeners, including late registrations, are
   released on unmount.
+- `scripts/prepare-bundle.sh` and `src-tauri/tauri.bundle.conf.json`: build the relocatable macOS app with its own Node executable, host and production modules. Release builds resolve them from app resources; debug builds use the checkout and `PI_MINI_NODE`.
 - `src-tauri/`: fixed native shell, global shortcut registration, close-to-hide,
   menu bar recovery, accessory activation, and explicit Quit lifecycle ownership of its Node child. Window
   and native WebView keyboard focus are restored before requesting composer
@@ -119,8 +125,10 @@ step count, Markdown structure guessing, or new structured-response contract.
 npm test
 npm run build:native
 npm run test:native
+npm run test:packaging
 ```
 
+- Packaging scenarios at `tests/companion/packaging.scenarios.test.mjs` build the release app and copy it into disposable Applications/relocation directories. macOS sandbox rules deny checkout reads; PATH excludes system Node and an invalid `PI_MINI_NODE` confirms release builds ignore that development override. Real WebView/SDK readiness, bundled Node ownership, standard Pi configuration-directory discovery, child shutdown and an unrelated loopback service are checked. The smoke invokes the real Tauri exit path; it does not automate the menu-bar Quit action or make a model call. These tests require a macOS desktop session and do not alter the user's checkout or installed app.
 - Five persistent approved application/protocol scenarios are at
   `tests/companion/conversation.scenarios.test.mjs`. Drivers use real SDKs,
   isolated real servers and a controlled agent adapter. They do not claim to

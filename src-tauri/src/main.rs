@@ -23,13 +23,25 @@ struct Backend {
 }
 
 impl Backend {
-    fn start(data_directory: PathBuf) -> Self {
-        let entry = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(if native_test::requested() {
-            "../dist-host/lifecycle-fixture.mjs"
+    fn start(data_directory: PathBuf, resource_directory: PathBuf) -> Self {
+        let (node, entry) = if cfg!(debug_assertions) {
+            let entry =
+                PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(if native_test::requested() {
+                    "../dist-host/lifecycle-fixture.mjs"
+                } else {
+                    "../dist-host/main.mjs"
+                });
+            (
+                std::env::var_os("PI_MINI_NODE").unwrap_or_else(|| "node".into()),
+                entry,
+            )
         } else {
-            "../dist-host/main.mjs"
-        });
-        let node = std::env::var_os("PI_MINI_NODE").unwrap_or_else(|| "node".into());
+            let backend = resource_directory.join("backend");
+            (
+                backend.join("node").into_os_string(),
+                backend.join("main.mjs"),
+            )
+        };
         let result = Command::new(node)
             .arg(entry)
             .env("PI_MINI_DATA_DIR", data_directory)
@@ -41,7 +53,7 @@ impl Backend {
             Ok(child) => child,
             Err(error) => return Self {
                 child: Mutex::new(None),
-                info: Err(format!("Cannot start companion backend: {error}. Install Node >=22.19 or set PI_MINI_NODE.")),
+                info: Err(format!("Cannot start companion backend: {error}. Check the app's bundled runtime, or Node/PI_MINI_NODE for development.")),
             },
         };
         let stdout = child.stdout.take().expect("piped stdout");
@@ -186,7 +198,13 @@ fn main() {
             } else {
                 app.path().app_data_dir()?
             };
-            app.manage(Backend::start(directory));
+            let resources = app.path().resource_dir().map_err(|error| {
+                format!(
+                    "Cannot locate app resources: {error}; executable: {:?}",
+                    std::env::current_exe()
+                )
+            })?;
+            app.manage(Backend::start(directory, resources));
             if let Err(error) = lifecycle::show_and_focus(app.handle()) {
                 lifecycle::report_error(app.handle(), error);
             }
