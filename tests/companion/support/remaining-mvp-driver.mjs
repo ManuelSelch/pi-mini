@@ -1,1 +1,1 @@
-export { RemainingMvpDriver } from '../../../companion/tests/support/native-lifecycle-driver.ts';
+export { RemainingMvpDriver } from '../../support/native-lifecycle-driver.ts';

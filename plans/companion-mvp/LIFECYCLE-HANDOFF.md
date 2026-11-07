@@ -90,7 +90,7 @@ outcomes for the next step, including failure recovery and missing-target safety
 No existing approved conversation scenario or implemented coverage was removed.
 
 The three native scenarios now have working drivers and run through
-`cd companion && npm run test:native` after building the native executable.
+`npm run test:native` from the repository root after building the native executable.
 Standard beforeEach/afterEach creates a fresh fixture and disposes it after each
 test, including failures. Real macOS shortcut and Cmd+Q event posting verifies
 those native boundaries; native window/WebView probes verify effects. Local

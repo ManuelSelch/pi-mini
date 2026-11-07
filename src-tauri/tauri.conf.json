@@ -1,38 +1,38 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Pi Floating Spike",
+  "productName": "Pi Mini",
   "version": "0.1.0",
-  "identifier": "com.piagent.floating-spike",
+  "identifier": "com.piagent.mini",
   "build": {
-    "frontendDist": "../ui"
+    "beforeDevCommand": "npm run dev:web",
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../dist"
   },
   "app": {
-    "withGlobalTauri": true,
-    "windows": [
-      {
-        "label": "main",
-        "title": "Pi Floating Spike",
-        "width": 340,
-        "height": 300,
-        "minWidth": 280,
-        "minHeight": 240,
-        "center": true,
-        "decorations": false,
-        "resizable": true,
-        "alwaysOnTop": true,
-        "shadow": true,
-        "backgroundColor": "#181b22"
-      }
-    ],
+    "macOSPrivateApi": true,
+    "windows": [{
+      "label": "main",
+      "title": "Pi Mini",
+      "width": 360,
+      "height": 380,
+      "minWidth": 360,
+      "minHeight": 380,
+      "maxWidth": 360,
+      "maxHeight": 380,
+      "center": true,
+      "decorations": false,
+      "resizable": false,
+      "maximizable": false,
+      "alwaysOnTop": true,
+      "transparent": true,
+      "backgroundColor": "#00000000"
+    }],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src ipc: http://ipc.localhost"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost; img-src 'self' data:"
     }
   },
   "bundle": {
-    "active": true,
-    "targets": [
-      "app"
-    ],
-    "icon": ["icons/icon.icns", "icons/icon.png"]
+    "active": false,
+    "targets": ["app"]
   }
 }

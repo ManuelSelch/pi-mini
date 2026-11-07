@@ -1,83 +1,170 @@
 # Pi Mini
 
-The real SDK-backed companion is in [companion/](companion/README.md).
-It implements the approved compact UI, real SDK conversations, and native
-shortcut/show/hide/background operation. Pi Chat handoff is deferred to the next
-step; its title action remains disabled.
-Run it with `cd companion && npm ci --include=dev && npm run dev`.
+A native SDK-backed companion, separate from the preserved mockups. The approved compact interface, real conversation, and native lifecycle
+are implemented here. Control+Option+Space shows/focuses the companion and toggles
+it away when already focused. Escape or window close hides it without stopping
+work. Pi Chat handoff is explicitly deferred to the next step; the title action
+stays disabled. [Current scope and deferred handoff proposal](plans/companion-mvp/LIFECYCLE-HANDOFF.md).
 
-The original spike and its existing regression tests are preserved below.
-Root-level npm commands still operate on that spike, not the companion.
+## Run locally
 
-## Original floating-window spike
-
-Standalone macOS native-window experiment. Scope approved in chat: compact
-340 × 300 logical-pixel window, initially always on top, pin toggle, dragging,
-resizing, and placeholder chat. No changes to existing Pi projects.
-
-## Try it
-
-Double-click **Pi Floating Spike.app** in this folder (local debug build).
-No development server, Node process, or backend is needed to run the app.
-
-- Switch to another ordinary app: this window should remain above it.
-- Click **Pinned** to turn always-on-top off; click **Unpinned** to restore it.
-- Drag the header to move it. Drag an edge/corner to resize it.
-- Close with × or quit with Cmd+Q.
-- Chat is deliberately disabled. There is no SDK, network, or credential access.
-
-Fullscreen apps, other Spaces, multiple monitors, and system-modal windows are
-exploratory: always-on-top is not a promise to cover every macOS surface.
-Please verify these interactively if relevant to your intended use.
-
-The bundled app is a local debug build, not a signed/notarized distribution.
-
-## Develop
-
-Requirements: Node/npm, Rust/Cargo, and Xcode Command Line Tools.
+Requirements: macOS, Node >=22.19, Rust >=1.90, and Xcode Command Line Tools.
+Configure providers/models with your existing Pi installation first.
 
 ```sh
 npm ci --include=dev
 npm run dev
 ```
 
-No frontend build framework is needed for this small experiment: Tauri embeds
-plain HTML, CSS, and JavaScript from `ui/` and uses macOS's system WebView.
+Or build the native executable with embedded web assets:
 
 ```sh
-npm run build:debug
+npm run build:native
+./src-tauri/target/debug/pi-mini
+```
+
+This is a local development executable, not a relocatable, signed or notarized
+application. Node and this checkout's installed dependencies/compiled host remain
+required. `PI_MINI_NODE` can select a Node executable when `node` is not on PATH.
+Do not move the checkout after building without rebuilding the native executable.
+
+- Fixed 360 × 380, always on top; drag the unused header area to move it.
+- Type a message and press Enter; Shift+Enter inserts a newline.
+- Latest assistant response is scrollable and never blindly truncated.
+- Small header dot: green ready, blue thinking/running, purple question,
+  amber connecting/stopping, gray superseded, red error. Hover or a screen reader
+  provides the status description. Errors use plain red text.
+- Required select/confirm questions have inline buttons; input/editor questions
+  use the composer. Explicit selects require Submit. Cancel answers the actual
+  pending prompt; stale/expired questions cannot be answered through the app.
+- Done / Explain / I’m stuck send ordinary messages, not required prompt answers.
+- Stop aborts the run without closing its runtime or clearing the draft.
+- A replaced controller does not reconnect automatically. Take control is explicit.
+- Control+Option+Space shows/focuses the native window and composer from another
+  app; pressing it while Pi Mini has focus hides the window.
+- Escape and native window close hide, preserving draft/session and ongoing work.
+  A response can finish while hidden; restoring shows the latest useful answer.
+- Cmd+Q explicitly quits and stops only the companion-owned backend. The Dock's
+  reopen action also restores the window. A shortcut-registration failure is
+  shown as plain red error text; use the Dock if that shortcut is unavailable.
+- The session title's Pi Chat action is deliberately disabled until the real
+  handoff entry contract exists. No mock destination or transcript-copy shortcut.
+
+## Data and security
+
+Native code starts one private loopback server on an ephemeral port. It never
+connects to or restarts the normal Pi Chat server. The native WebSocket adapter
+uses the SDK through Tauri's native socket plugin; the server's browser Origin
+checks remain intact. Frontend code accepts only the native-supplied loopback
+`/ws` endpoint, renders agent text as text, and receives no provider credentials.
+
+The server can execute tools with your user permissions. This is not a sandbox
+or an authenticated network service. Keep it private/loopback.
+
+Companion data defaults to macOS Application Support under `com.piagent.mini`:
+separate `sessions/`, `projects.json`, and a default `workspace/`. Both history
+writes **and catalogue reads** are explicitly rooted there; setting only the
+server's `sessionsDirectory` is insufficient to isolate its default lister.
+`PI_MINI_PROJECT` selects an existing workspace instead. Providers, credentials,
+settings, extensions and instructions use standard Pi discovery; authentication
+is reused through Pi, never copied into frontend or companion-local auth files.
+
+Each application launch creates a fresh runtime/conversation. Finalized history
+is saved in companion storage, but there is no history picker or last-session
+restore on a fresh app launch in this slice. Same-server reconnect preserves the
+selected runtime and finalized history without replaying messages or other
+mutations. A missing runtime is reported instead of silently attaching elsewhere.
+An unobserved prefix of an in-flight response cannot be recovered by the SDK;
+the companion suppresses recovered draft suffixes until a finalized message
+arrives rather than presenting an incomplete suffix as the answer. Unexpected backend-process restart/recovery is
+not implemented; quit and relaunch after a permanent backend failure.
+
+Published dependencies are pinned: SDK 0.2.1, server 0.2.1, and that server's Pi
+1.0.2/1.0.3 family. Sibling source checkouts are not runtime dependencies and were
+not modified. The published server itself resolves SDK 0.2.0; no overrides or
+compatibility shims are added. Installed native/real-model smoke verifies this
+specific combination, not all future SDK/server versions.
+
+## Architecture
+
+- `src/conversation/infra/host/`: private server, isolated catalogue/history,
+  standard Pi services/runtime adapter, and companion-mode instructions.
+- `src/conversation/infra/native-transport.ts`: bounded, ordered, native socket
+  transport only. It preserves close code 4001; it does not own response length.
+- `src/conversation/app/`: SDK state orchestration, selected runtime, latest useful
+  response, prompt answers, error presentation and explicit control reclaim.
+- `src/conversation/domain/`: UI-independent view values and status labels.
+- `src/conversation/ui/components/`: value/callback-only Mantine/Tailwind views.
+- `src/conversation/ui/containers/`: state subscription and separate ordinary
+  composer drafts versus question answers.
+- `src/lifecycle/app/`: native visibility/error listeners and composer-focus
+  requests. Escape only asks native code to hide; it never answers a prompt or
+  disposes conversation state. Listeners, including late registrations, are
+  released on unmount.
+- `src-tauri/`: fixed native shell, global shortcut registration, close-to-hide,
+  Dock reopen, and explicit Quit lifecycle ownership of its Node child. Window
+  and native WebView keyboard focus are restored before requesting composer
+  focus. Hidden windows stay mounted/connected. Parent stdin EOF requests
+  graceful backend shutdown; forced termination is restricted to the owned
+  child after its deadline. No broad process/port killing.
+
+Companion-mode instructions control brevity, one actionable procedural step and
+waiting, optional explanation, and preservation of essential warnings. SDK and
+protocol transport messages/status/questions unchanged; the UI adds no invented
+step count, Markdown structure guessing, or new structured-response contract.
+
+## Verification
+
+```sh
 npm test
-npm exec tauri build -- --debug --bundles app
+npm run build:native
+npm run test:native
 ```
 
-The generated bundle is at
-`src-tauri/target/debug/bundle/macos/Pi Floating Spike.app`.
-The root-level copy is provided for convenience; after rebuilding, replace it:
+- Five persistent approved application/protocol scenarios are at
+  `tests/companion/conversation.scenarios.test.mjs`. Drivers use real SDKs,
+  isolated real servers and a controlled agent adapter. They do not claim to
+  automate the actual Pi Chat frontend. Instruction checks construct a real Pi
+  AgentSession and inspect its effective system prompt without a model call.
+- Unit/DOM tests cover asynchronous operation errors, native transport disposal,
+  ordered sends, controller replacement, prompts/follow-ups, composer Stop, and
+  compact response/error presentation. DOM tests do not establish native geometry.
+- Native smoke launches the actual executable/WebView, native WebSocket plugin,
+  server and real Pi runtime. It asserts SDK readiness, runtime creation and
+  fixed dimensions/non-resizability without sending a model message. It reuses
+  normal provider/resource configuration but uses disposable history/workspace.
+- Three approved native lifecycle scenarios are at
+  `tests/companion/mvp-lifecycle.scenarios.test.mjs`. They use the real native
+  window/WebView, SDK, sidecar and server with a controlled test-only agent (no
+  model/credential access). The macOS helper activates another app, posts the
+  actual global shortcut and Cmd+Q, and queries the real foreground application.
+  Driver probes additionally assert native visibility/focus/dimensions, composer
+  DOM focus, session/backend identity, draft retention, background completion,
+  single submission and owned-process/listener shutdown. Input drafts and local
+  Enter/Escape events are driven inside the real WebView; these are not evidence
+  of physical text entry or physical Escape-key delivery. Dock reopen is source
+  inspected, not separately automated. No screenshot or visual fidelity claim.
+  Scenarios use standard beforeEach/afterEach with a fresh driver and guaranteed
+  teardown, not per-scenario wrapper helpers.
+- Native scenarios run serially because they temporarily change foreground focus
+  and share the OS shortcut namespace. They require macOS Accessibility/event-post
+  permission for the test runner; missing permission is a test failure, not a
+  silent skip. The driver restores the previous app and stops only owned processes.
+- `--lifecycle-test` and its private stdin/probe bridge are explicitly test-only;
+  its compiled fixture is built by `test:native`, never selected on normal launch.
+- An explicitly separate `--model-smoke` mode sends one harmless real prompt
+  through that full native path and checks for a nonempty response. It requires
+  `PI_MINI_SMOKE_DATA_DIR`; it is not part of routine tests because it consumes
+  configured provider access. Native owner exit shuts down its backend.
 
-```sh
-ditto 'src-tauri/target/debug/bundle/macos/Pi Floating Spike.app' 'Pi Floating Spike.app'
-```
+Verified locally: 13 application/transport tests (including the 5 conversation
+scenarios), 11 DOM/hook tests, production web/host builds, native compilation,
+startup smoke and all 3 approved native lifecycle scenarios. A real native-model
+smoke returned `Ready.` before the repository restructure.
+No screenshots, visual comparison or real Pi Chat handoff claimed. Handoff's 4
+unimplemented scenario drafts are retained separately and are not run or counted
+as passing coverage.
 
-`npm run build` makes a release `.app` instead. Build outputs are ignored by Git.
-
-## Architecture and verification boundary
-
-- `src-tauri/tauri.conf.json`: initial native size, borderless window, resizing,
-  always-on-top, embedded frontend and local-content CSP.
-- `src-tauri/capabilities/main.json`: permissions for local window controls.
-- `ui/main.js`: pin control reads/writes the native state; the header and edge
-  handlers delegate dragging/resizing to Tauri. Status shows native API errors.
-  Pin state lives in the native window and resets on each launch.
-- `src-tauri/src/main.rs`: minimal Tauri entry point and opt-in smoke-test reporting.
-- `tests/window.scenarios.test.mjs`: three persistent acceptance scenarios using
-  a test driver. Each launches a real app/WebView with `--smoke-test`; the shared
-  UI toggle function exercises pin off/on on that same window. Native bounds
-  queries confirm initial size and programmatic movement/resizing.
-
-All three automated checks passed locally. JavaScript syntax, Rust formatting,
-app bundle generation, and npm audit also passed.
-
-These checks establish native API state and WebView execution, not visual
-stacking against another app, physical mouse dragging, or fullscreen/Spaces
-behavior. Those remain manual checks. No screenshots or browser automation
-were performed. There are no existing outcomes removed or changed.
+`npm audit` reports 4 inherited Pi/server findings (3 moderate, 1 high, including
+minimatch/undici). No upstream dependency override or unrelated upgrade was made.
+A new Vitest dependency was patched to 5.1.0 before final verification.

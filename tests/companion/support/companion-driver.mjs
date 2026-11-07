@@ -1,1 +1,1 @@
-export { CompanionDriver } from '../../../companion/tests/support/companion-driver.ts';
+export { CompanionDriver } from '../../support/companion-driver.ts';

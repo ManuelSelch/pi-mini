@@ -6,7 +6,7 @@ beforeEach(() => { app = new RemainingMvpDriver(); });
 afterEach(async () => { await app.dispose(); });
 
 // Approved native lifecycle scenarios; Pi Chat handoff is deferred separately.
-// Run serially through companion/npm run test:native (macOS event-post permission).
+// Run serially through npm run test:native (macOS event-post permission).
 // Native window/shortcut/Quit boundaries are real; local keys use WebView events.
 test('global shortcut shows and focuses the fixed companion; Escape preserves its draft and session', async () => {
   await app.launchCompanion();

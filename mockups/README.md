@@ -36,7 +36,7 @@ preview edits require rebuilding that copy. Production compilation omits Agentat
 
 ## Boundaries
 
-The original spike outside `mockups/` is untouched. Build outputs, dependencies,
+The production application is at the repository root. Build outputs, dependencies,
 logs and runtime ownership records are ignored. The native app uses the macOS
 system WebView and local window/event APIs. The browser version uses a local
 BroadcastChannel for demo window synchronization. No backend/SDK is installed.

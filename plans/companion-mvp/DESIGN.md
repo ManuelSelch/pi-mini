@@ -71,8 +71,7 @@ replacement produces a visible superseded state; taking control is explicit.
 - Replace simulated status with actual connection/run/prompt states.
 - The mock handoff remains only in preserved mockup source; no misleading live
   Open in Pi Chat action until the real contract exists.
-- Existing root spike pin-toggle scenarios remain unchanged. They do not verify
-  the companion redesign or SDK behavior.
+- The original spike and its pin-toggle scenarios were subsequently retired at the user's request; they did not verify the companion redesign or SDK behavior.
 
 ## Approval and evidence
 
@@ -83,10 +82,9 @@ seed real Pi history and verify it is not visible in the companion. Additional
 unit/integration regressions protect post-admission errors and partial-stream
 recovery. These tests are not a real-provider or visual-rendering claim.
 
-`companion/` implements the first slice independently of the preserved root spike
-and mockups. Native WebView startup smoke verifies real runtime creation through
+The first slice was implemented independently of the mockups and subsequently moved to the repository root. Native WebView startup smoke verifies real runtime creation through
 the native socket bridge and fixed dimensions/non-resizability. An explicitly
-separate real-model native smoke returned “Ready.”. See `companion/README.md`
+separate real-model native smoke returned “Ready.”. See `README.md`
 for architecture, commands, limitations and verification details.
 
 Approved UI: `mockups/companion-mvp/`, revision 6. User: “mockup approved.
