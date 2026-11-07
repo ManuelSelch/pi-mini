@@ -31,7 +31,7 @@ To build a relocatable macOS app for the current machine's architecture:
 npm run build:app
 ```
 
-The app is produced at `src-tauri/target/release/bundle/macos/Pi Mini.app`; copy it to `/Applications` to install it. It bundles a checksum-verified official Node 22.22.1 runtime and production dependencies, and does not need the checkout or a system Node to start. Building downloads Node and npm packages. The build is not Developer ID signed or notarized, so macOS Gatekeeper may require explicit permission to open it. Provider configuration and credentials still come from the user's Pi installation; external tools and extensions may have their own dependencies.
+The app is produced at `src-tauri/target/release/bundle/macos/Pi Mini.app`. To build and install it to `/Applications`, quit the running app first and run `npm run install:app`. It bundles a checksum-verified official Node 22.22.1 runtime and production dependencies, and does not need the checkout or a system Node to start. Building downloads Node and npm packages. The build is not Developer ID signed or notarized, so macOS Gatekeeper may require explicit permission to open it. Provider configuration and credentials still come from the user's Pi installation; external tools and extensions may have their own dependencies.
 
 - Fixed 360 × 380, always on top; drag the unused header area to move it.
 - Type a message and press Enter; Shift+Enter inserts a newline.
