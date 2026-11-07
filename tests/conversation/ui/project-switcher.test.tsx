@@ -5,6 +5,8 @@ import { cleanup, fireEvent, render } from '@testing-library/react';
 import { ProjectSwitcher } from '../../../src/conversation/ui/components/project-switcher';
 
 Object.defineProperty(window, 'matchMedia', { value: (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }) });
+Object.assign(globalThis, { ResizeObserver: class { observe() {} unobserve() {} disconnect() {} } });
+Object.defineProperty(document, 'fonts', { value: new window.EventTarget(), configurable: true });
 afterEach(cleanup);
 
 test('filter and keyboard navigation select a project, while Escape cancels', () => {
