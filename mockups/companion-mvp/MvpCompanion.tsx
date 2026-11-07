@@ -89,7 +89,7 @@ export function MvpCompanion() {
     {hidden ? <Button className="restore-companion" variant="default" onClick={() => setHidden(false)}>Show companion · ⌃⌥Space</Button>
       : <div className="companion-shell browser-shell mvp-shell">
         <header className="window-header">
-          <span className={'mvp-status-dot ' + state} role="status" aria-live="polite" title={status}><span className="visually-hidden">{status}</span></span>
+          <span className="mvp-status-dot" data-state={state} role="status" aria-live="polite" title={status}><span className="visually-hidden">{status}</span></span>
           {text && <UnstyledButton className="session-title session-link" aria-label="Open Router setup in Pi Chat and transfer control" title="Open in Pi Chat · transfer control" disabled={busy || Boolean(prompt) || inactive} onClick={() => { setState('transferred'); setNotice('Handoff simulated only. Real Pi Chat needs a new session-opening entry contract.'); }}>Router setup</UnstyledButton>}
         </header>
         <div className="companion-content">

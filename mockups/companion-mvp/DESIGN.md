@@ -1,6 +1,6 @@
 # Companion MVP interface
 
-Revision: 5
+Revision: 6
 Status: in review; not yet visually approved.
 
 ## Goal and scope
@@ -31,7 +31,9 @@ The earlier `mockups/companion/` revision 3 remains preserved unchanged.
 - One 6px colored dot in the top-left header corner; no status row or visible
   label. Green: ready; blue: thinking/running; purple: required answer;
   amber: reconnecting; gray: control elsewhere; red: error. Preserve status
-  descriptions for screen readers and hover tooltips.
+  descriptions for screen readers and hover tooltips. State styling uses a
+  data attribute, not generic state classes that collide with shared styles;
+  the dot stays 6 × 6px in every state.
   Preserve the useful answer while waiting, disconnected or reporting an error.
 - Required questions are a separated inline block with only their actual
   question, offered options/Yes/No, and explicit cancellation. No “Answer needed”
