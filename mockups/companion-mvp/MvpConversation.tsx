@@ -13,10 +13,9 @@ type Props = {
 export function MvpConversation({ text, prompt, canSend, onAnswer, onSend }: Props) {
   return <main className="conversation mvp-conversation">
     {text ? <div className="message-text">{text}</div> : <div className="mvp-empty">
-      <h1>A little help, as you go.</h1><p>Ask a question to get started.</p>
+      <h1>Lets cook</h1>
     </div>}
     {prompt && <section className="inline-question" aria-label="Agent question">
-      <div className="question-caption">ANSWER NEEDED</div>
       <div className="question-title">{prompt.title}</div>
       {prompt.kind !== 'input' && <div className="quick-actions">
         {(prompt.kind === 'confirm' ? ['Yes', 'No'] : prompt.options ?? []).map((option) =>

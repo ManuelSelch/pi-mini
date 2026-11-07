@@ -1,6 +1,6 @@
 # Companion MVP interface
 
-Revision: 1
+Revision: 2
 Status: in review; not yet visually approved.
 
 ## Goal and scope
@@ -13,17 +13,25 @@ The earlier `mockups/companion/` revision 3 remains preserved unchanged.
 
 ## Layout and behavior
 
-- Preserve the 360 × 380 charcoal companion, rounded corners, compact title,
-  icon-only Open in Pi Chat and anchored collapse to 280 × 44.
+- Fixed 360 × 380 charcoal companion: no user resizing or resize handles.
+  Preserve rounded corners, compact title, icon-only Open in Pi Chat and
+  anchored collapse to a fixed 280 × 44 strip. Native size locking is a
+  production requirement, not proven by this browser approximation.
+- Reduce spacing throughout: 34px header, 12px transcript/error side padding,
+  tighter question/action spacing, and 3px vertical composer padding.
+- Empty state says only “Lets cook”, with no subtitle.
 - Show the latest assistant response, not the latest user submission. Keep all
   text available by scrolling; do not truncate or extract titles from Markdown.
 - No numbered steps, progress dots, invented titles or router-specific start
   action. Guidance comes from agent instructions, not UI structure.
-- One small status row: ready, thinking, running, waiting for an answer,
-  reconnecting, failed or control transferred. Preserve the useful answer while
-  waiting, disconnected or reporting an error.
-- Required questions are a separated inline block with “Answer needed”, their
-  actual question, offered options/Yes/No, and explicit cancellation. Input
+- One 6px colored dot in the top-left header corner; no status row or visible
+  label. Green: ready; blue: thinking/running; purple: required answer;
+  amber: reconnecting; gray: control elsewhere; red: error. Preserve status
+  descriptions for screen readers and hover tooltips, including when collapsed.
+  Preserve the useful answer while waiting, disconnected or reporting an error.
+- Required questions are a separated inline block with only their actual
+  question, offered options/Yes/No, and explicit cancellation. No “Answer needed”
+  caption. Input
   questions use the composer with a “Your answer…” placeholder. Select/confirm
   disable ordinary composer submission while awaiting the required answer.
 - Optional Done / Explain / I’m stuck buttons send normal user messages. They
@@ -32,16 +40,19 @@ The earlier `mockups/companion/` revision 3 remains preserved unchanged.
   required answer. Composer remains available for other idle user messages.
 - Enter submits; Shift+Enter inserts a newline. Keep an in-progress draft during
   running states. Stop cancels the simulated reply without clearing the answer.
-- Failed reply exposes a concise error; another message is an explicit retry,
-  never an automatic resend of uncertain work.
-- Superseded control is passive until explicit Take control. No automatic
-  reconnection fight. The last response remains available.
-- Open in Pi Chat first asks for explicit session-and-control transfer. It is
-  unavailable during running, pending questions and disconnected states. On
-  success show “Pi Chat has control”; Take control here is explicit. Cancellation
-  leaves the session unchanged. Actual failed-transfer handling must retain the
-  session and provide explicit recovery; no implicit reclaim after ownership
-  might already have changed.
+- Failed reply exposes concise plain red text without a colored background,
+  aligned to the same side padding as the response. Another message is an
+  explicit retry, never an automatic resend of uncertain work.
+- Superseded control is passive until explicit Take control. Show only the
+  gray status dot and recovery button, without explanatory control prose.
+  No automatic reconnection fight. The last response remains available.
+- Clicking Open in Pi Chat itself explicitly transfers the session and control;
+  no intermediate handoff/confirmation screen. Its accessible name and hover
+  tooltip explain the transfer. It is unavailable during running, pending
+  questions, disconnected states or before there is a conversation. On success
+  show the gray control dot; Take control here is explicit. Actual failed-transfer
+  handling must retain the session and provide explicit recovery; no implicit
+  reclaim after ownership might already have changed.
 - Escape hides the mock companion; Show companion restores it. Control+Option+
   Space toggles only while this browser page receives keys. Restoration focuses
   the composer. Hiding/collapse do not cancel pending local work or clear drafts.
@@ -49,7 +60,7 @@ The earlier `mockups/companion/` revision 3 remains preserved unchanged.
 ## Direct states
 
 `/companion-mvp/?state=` accepts: idle (default), thinking, running, select,
-confirm, input, error, reconnecting, superseded, handoff, transferred, empty.
+confirm, input, error, reconnecting, superseded, transferred, empty.
 Review links are outside the companion and are not production UI. Their labels
 and simulated-operation notices disclose how buttons are routed. State links
 reload deterministic fake data; clicking the current link resets the state.

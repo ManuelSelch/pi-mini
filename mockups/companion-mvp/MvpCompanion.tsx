@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActionIcon, Button, Loader, Textarea } from '@mantine/core';
+import { ActionIcon, Button, Textarea } from '@mantine/core';
 import { IconArrowUpRight, IconChevronDown, IconChevronUp, IconPlayerStop } from '@tabler/icons-react';
 import { MvpConversation, type Prompt } from './MvpConversation';
 
-type State = 'idle' | 'thinking' | 'running' | 'select' | 'confirm' | 'input' | 'error' | 'reconnecting' | 'superseded' | 'handoff' | 'transferred' | 'empty';
-const states: State[] = ['idle', 'thinking', 'running', 'select', 'confirm', 'input', 'error', 'reconnecting', 'superseded', 'handoff', 'transferred', 'empty'];
+type State = 'idle' | 'thinking' | 'running' | 'select' | 'confirm' | 'input' | 'error' | 'reconnecting' | 'superseded' | 'transferred' | 'empty';
+const states: State[] = ['idle', 'thinking', 'running', 'select', 'confirm', 'input', 'error', 'reconnecting', 'superseded', 'transferred', 'empty'];
 const initial = new URLSearchParams(location.search).get('state');
 const initialState: State = states.includes(initial as State) ? initial as State : 'idle';
 const answer = 'Join the router’s Wi-Fi using the network name on its label.\n\nKeep the password private.';
@@ -25,11 +25,11 @@ export function MvpCompanion() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prompt = prompts[state];
   const busy = state === 'thinking' || state === 'running';
-  const inactive = ['reconnecting', 'superseded', 'handoff', 'transferred'].includes(state);
+  const inactive = ['reconnecting', 'superseded', 'transferred'].includes(state);
   const canSend = !busy && !inactive;
   const status = prompt ? 'Waiting for your answer' : ({
     idle: 'Ready', thinking: 'Thinking…', running: 'Running · checking connection', error: 'Reply failed',
-    reconnecting: 'Reconnecting…', superseded: 'Control moved to another app', handoff: 'Ready to hand off',
+    reconnecting: 'Reconnecting…', superseded: 'Control moved to another app',
     transferred: 'Pi Chat has control', empty: 'Ready',
   } as Partial<Record<State, string>>)[state];
 
@@ -90,24 +90,17 @@ export function MvpCompanion() {
     {hidden ? <Button className="restore-companion" variant="default" onClick={() => setHidden(false)}>Show companion · ⌃⌥Space</Button>
       : <div className={'companion-shell browser-shell mvp-shell' + (collapsed ? ' collapsed' : '')}>
         <header className="window-header">
+          <span className={'mvp-status-dot ' + state} role="status" aria-live="polite" title={status}><span className="visually-hidden">{status}</span></span>
           <strong className="session-title">{initialState === 'empty' ? 'New conversation' : 'Router setup'}</strong>
           <div className="header-actions">
-            {!collapsed && <ActionIcon variant="subtle" color="gray" aria-label="Open in Pi Chat" title="Open in Pi Chat" disabled={busy || Boolean(prompt) || inactive} onClick={() => setState('handoff')}><IconArrowUpRight size={16}/></ActionIcon>}
+            {!collapsed && <ActionIcon variant="subtle" color="gray" aria-label="Open in Pi Chat and transfer control" title="Open in Pi Chat · transfer control" disabled={busy || Boolean(prompt) || inactive || !text} onClick={() => { setState('transferred'); setNotice('Handoff simulated only. Real Pi Chat needs a new session-opening entry contract.'); }}><IconArrowUpRight size={16}/></ActionIcon>}
             <ActionIcon variant="subtle" color="gray" aria-label={collapsed ? 'Expand companion' : 'Collapse companion'} onClick={() => setCollapsed(!collapsed)}>{collapsed ? <IconChevronUp size={15}/> : <IconChevronDown size={15}/>}</ActionIcon>
           </div>
         </header>
         <div className="companion-content" hidden={collapsed}>
-          <div className={'mvp-status ' + state} role="status" aria-live="polite">
-            {busy || state === 'reconnecting' ? <Loader size={10}/> : <i/>}<span>{status}</span>
-          </div>
           {state === 'error' && <div className="error-banner" role="alert">Provider unavailable. Your last response is still here. Try sending again.</div>}
-          {state === 'superseded' && <div className="control-notice"><p>Another app has control. Reconnect only when you want to take it back.</p><Button variant="default" size="compact-xs" onClick={() => { setState('idle'); setNotice('Explicit takeover · simulated'); }}>Take control</Button></div>}
-          {state === 'handoff' ? <main className="conversation handoff-confirm">
-            <h1>Continue in Pi Chat?</h1>
-            <p>The same conversation will open there. Pi Chat will take control; this companion will pause.</p>
-            <p className="handoff-reference">Router setup · session a7c21e8f</p>
-            <div className="quick-actions"><Button size="compact-xs" onClick={() => { setState('transferred'); setNotice('Handoff simulated only. Real Pi Chat needs a new session-opening entry contract.'); }}>Open & transfer control</Button><Button size="compact-xs" variant="default" onClick={() => setState('idle')}>Cancel</Button></div>
-          </main> : <MvpConversation text={text} prompt={prompt} canSend={canSend} onAnswer={answerQuestion} onSend={send}/>}
+          {state === 'superseded' && <div className="control-notice"><Button variant="default" size="compact-xs" onClick={() => { setState('idle'); setNotice('Explicit takeover · simulated'); }}>Take control</Button></div>}
+          <MvpConversation text={text} prompt={prompt} canSend={canSend} onAnswer={answerQuestion} onSend={send}/>
           {state === 'transferred' && <div className="control-notice transferred-actions"><Button variant="default" size="compact-xs" onClick={() => { setState('idle'); setNotice('Explicit return of control · simulated'); }}>Take control here</Button></div>}
           <div className="composer-wrap">
             <div className="composer">
