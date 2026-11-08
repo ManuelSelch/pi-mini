@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "pi": {
+    "extensions": ["./src/conversation/infra/mini-mode.ts"]
+  },
   "scripts": {
     "dev": "npm run build:host && tauri dev",
     "dev:web": "vite --host 127.0.0.1",

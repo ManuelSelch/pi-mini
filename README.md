@@ -13,12 +13,12 @@ Configure providers/models with your existing Pi installation first.
 
 ```sh
 npm ci --include=dev
-npm run install:extension
+# Register this checkout once: pi install /path/to/pi-mini
 # Start Pi Chat's server using /pi-chat start in Pi, then:
 npm run dev
 ```
 
-Install the extension into the Pi environment used by the shared server. The installer refuses to overwrite an existing `extensions/pi-mini` directory; explicitly remove that installation before reinstalling. New sessions load the extension; no shared-server source changes or restart are required. There is no `/mini-mode` user command or extra button.
+Register this checkout as a local package in the shared server's Pi settings (`packages` array), or run `pi install /path/to/pi-mini`. The `pi.extensions` manifest in `package.json` loads the extension directly from source without copying or building it. Keep the checkout and its dependencies available. New sessions load the extension; existing sessions need `/reload`. There is no `/mini-mode` user command or extra button. The copy-based `install:extension` script remains an alternative; do not register both installations.
 
 Pi Mini defaults to `ws://127.0.0.1:8788/ws`. Set `PI_MINI_ENDPOINT` for another loopback port and `PI_MINI_PROJECT` for a different initial working directory. Start the shared server before Pi Mini; no private-server fallback is provided.
 
@@ -175,7 +175,7 @@ npm run test:packaging
   `PI_MINI_SMOKE_DATA_DIR`; it is not part of routine tests because it consumes
   configured provider access and an already-running shared server with the extension installed. It writes a short session to that server's history; native exit does not stop the server.
 
-Shared-server verification: 24 application/protocol tests, 19 DOM/hook tests, the native startup smoke, and all three relocated/packaged-app scenarios pass. TypeScript, web/host/extension builds, debug/release native builds and `cargo check` pass. `main.rs` formatting passes; whole-crate `cargo fmt --check` still reports pre-existing formatting in `lifecycle.rs` and `menu_bar.rs`, left unchanged. The extension installer was checked in a temporary Pi directory, including refusal to overwrite. The user's live extension directory and installed app were not modified; use the installation commands above to activate this build. Full focus/menu-bar lifecycle and real-model smoke were not rerun for this change.
+Shared-server verification: 24 application/protocol tests, 19 DOM/hook tests, the native startup smoke, and all three relocated/packaged-app scenarios pass. TypeScript, web/host/extension builds, debug/release native builds and `cargo check` pass. `main.rs` formatting passes; whole-crate `cargo fmt --check` still reports pre-existing formatting in `lifecycle.rs` and `menu_bar.rs`, left unchanged. The extension installer was checked in a temporary Pi directory, including refusal to overwrite. The user's live extension directory and installed app were not modified by that verification. The checkout is now registered in the user's Pi `settings.json` packages list for direct source loading. Full focus/menu-bar lifecycle and real-model smoke were not rerun for this change.
 
 Earlier verification covered 13 application/transport tests, 11 DOM/hook tests,
 production builds, startup smoke and the three original lifecycle scenarios. The
