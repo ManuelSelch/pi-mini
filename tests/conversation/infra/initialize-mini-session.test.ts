@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { PiClient } from '@manuelselch/pi-sdk';
 import { initializeMiniSession } from '../../../src/conversation/infra/initialize-mini-session';
+import { miniInitializedNotification } from '../../../src/conversation/domain/initialization';
 
 function fixture() {
   let receive: Parameters<PiClient['onMessage']>[0] | undefined;
@@ -18,17 +19,18 @@ function fixture() {
     },
   } as unknown as PiClient;
   const finish = (outcome: 'completed' | 'failed') => receive?.({ version: 2, type: 'event', event: 'operation.finished', serverInstanceId: 'server', sessionId: 'session', sequence: 1, data: { operationId: 'operation', requestId: 'request', ...(outcome === 'failed' ? { outcome, error: { code: 'operationFailed', message: 'Missing extension' } } : { outcome }) } });
-  return { client, finish, get calls() { return calls; }, get disposed() { return !receive && !connection; } };
+  const acknowledge = (sessionId = 'session', message = miniInitializedNotification) => receive?.({ version: 2, type: 'event', event: 'notification.created', serverInstanceId: 'server', sessionId, sequence: 1, data: { level: 'info', message } });
+  return { client, finish, acknowledge, get calls() { return calls; }, get disposed() { return !receive && !connection; } };
 }
 
-test('initialization waits for operation completion, not merely an accepted receipt', async () => {
+test('initialization waits for the instruction acknowledgment, not merely an accepted receipt', async () => {
   const app = fixture();
   let initialized = false;
   const pending = initializeMiniSession(app.client, 'session').then(() => { initialized = true; });
   await Promise.resolve();
 
   assert.equal(initialized, false);
-  app.finish('completed');
+  app.acknowledge();
   await pending;
 
   assert.equal(initialized, true);
@@ -36,7 +38,7 @@ test('initialization waits for operation completion, not merely an accepted rece
   assert.equal(app.disposed, true);
 });
 
-test('initialization tolerates a shared server taking more than 15 seconds to finish', async (context) => {
+test('initialization tolerates delayed instruction insertion without retrying', async (context) => {
   context.mock.timers.enable({ apis: ['setTimeout'] });
   const app = fixture();
   let initialized = false;
@@ -44,7 +46,7 @@ test('initialization tolerates a shared server taking more than 15 seconds to fi
   await Promise.resolve();
 
   context.mock.timers.tick(20_000);
-  app.finish('completed');
+  app.acknowledge();
   await pending;
 
   assert.equal(initialized, true);
@@ -61,11 +63,45 @@ test('an unanswered initialization has a bounded deadline without blaming extens
   context.mock.timers.tick(60_000);
 
   await assert.rejects(pending, (error: Error) => {
-    assert.match(error.message, /timed out.*server did not report completion/i);
+    assert.match(error.message, /timed out.*extension did not acknowledge instruction insertion/i);
     assert.doesNotMatch(error.message, /extension is installed/);
     return true;
   });
   assert.equal(app.calls, 1);
+  assert.equal(app.disposed, true);
+});
+
+test('unrelated notifications and other sessions do not unlock initialization', async () => {
+  const app = fixture();
+  let initialized = false;
+  const pending = initializeMiniSession(app.client, 'session').then(() => { initialized = true; });
+  app.acknowledge('other-session');
+  app.acknowledge('session', 'Unrelated notification');
+  await Promise.resolve();
+
+  assert.equal(initialized, false);
+
+  app.acknowledge();
+  await pending;
+  assert.equal(initialized, true);
+});
+
+test('an acknowledgment arriving before the receipt is retained', async () => {
+  const app = fixture();
+  const pending = initializeMiniSession(app.client, 'session');
+  app.acknowledge();
+
+  await pending;
+  assert.equal(app.calls, 1);
+  assert.equal(app.disposed, true);
+});
+
+test('completion without the extension acknowledgment is not treated as initialized', async () => {
+  const app = fixture();
+  const pending = initializeMiniSession(app.client, 'session');
+  app.finish('completed');
+
+  await assert.rejects(pending, /extension did not acknowledge initialization/);
   assert.equal(app.disposed, true);
 });
 

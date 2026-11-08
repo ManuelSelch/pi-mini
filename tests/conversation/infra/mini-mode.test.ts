@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { getPiChatExtensionRegistry } from '@manuelselch/pi-server/extensions';
 import miniMode from '../../../src/conversation/infra/mini-mode';
+import { miniInitializedNotification } from '../../../src/conversation/domain/initialization';
 import { companionInstructions } from '../../../src/conversation/infra/host/instructions';
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
@@ -23,12 +24,21 @@ test('the action routes instructions to the requested session, once, without a c
   const first = session('first');
   const second = session('second');
   const registry = getPiChatExtensionRegistry();
+  const notifications: { message: string; level?: string }[] = [];
+  const notify = (message: string, level?: string) => {
+    assert.equal(first.messages.length, 1, 'Instructions must exist before acknowledgment');
+    notifications.push({ message, level });
+  };
   try {
-    await registry.runAction('pi-mini.initialize', { sessionId: 'first', notify() {} });
-    await registry.runAction('pi-mini.initialize', { sessionId: 'first', notify() {} });
+    await registry.runAction('pi-mini.initialize', { sessionId: 'first', notify });
+    await registry.runAction('pi-mini.initialize', { sessionId: 'first', notify });
 
     assert.deepEqual(first.messages, [{ message: { customType: 'pi-mini-instructions', content: companionInstructions, display: false }, options: { triggerTurn: false } }]);
     assert.deepEqual(second.messages, []);
+    assert.deepEqual(notifications, [
+      { message: miniInitializedNotification, level: 'info' },
+      { message: miniInitializedNotification, level: 'info' },
+    ]);
     assert.equal(first.commandCount(), 0);
     assert.equal(second.commandCount(), 0);
   } finally { first.shutdown(); second.shutdown(); }

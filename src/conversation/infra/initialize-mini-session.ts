@@ -1,6 +1,7 @@
 import type { PiClient } from '@manuelselch/pi-sdk';
+import { miniInitializeAction, miniInitializedNotification } from '../domain/initialization';
 
-/** An accepted receipt is not completion: keep the composer locked until success. */
+/** Wait for instruction insertion, not the server's later catalogue refresh. */
 export async function initializeMiniSession(client: PiClient, sessionId: string): Promise<void> {
   const outcomes = new Map<string, { outcome: string; error?: { message: string } }>();
   let operationId: string | undefined;
@@ -12,22 +13,22 @@ export async function initializeMiniSession(client: PiClient, sessionId: string)
   const check = () => {
     const outcome = operationId ? outcomes.get(operationId) : undefined;
     if (!outcome) return;
-    if (outcome.outcome === 'completed') resolve();
+    if (outcome.outcome === 'completed') reject(new Error('The Pi Mini extension did not acknowledge initialization. Reload the session or relaunch Pi Mini after updating the extension.'));
     else reject(new Error(outcome.error?.message ?? 'Pi Mini initialization failed.'));
   };
   const unsubscribe = client.onMessage((message) => {
-    if (message.type !== 'event' || message.event !== 'operation.finished' || message.sessionId !== sessionId) return;
+    if (message.type !== 'event' || !('sessionId' in message) || message.sessionId !== sessionId) return;
+    if (message.event === 'notification.created' && message.data.level === 'info' && message.data.message === miniInitializedNotification) resolve();
+    if (message.event !== 'operation.finished') return;
     outcomes.set(message.data.operationId, message.data);
     check();
   });
   const stopConnection = client.subscribe((state) => {
     if (state.connection.phase !== 'ready') reject(new Error('Pi Mini initialization interrupted; nothing was resent. Quit and relaunch to create a new session.'));
   });
-  // The shared server publishes completion after its session/catalogue refresh.
-  // A normal user environment can exceed 15 seconds even when the action succeeds.
-  const timeout = setTimeout(() => reject(new Error('Pi Mini initialization timed out: the server did not report completion within 60 seconds. The outcome is unknown; nothing was resent. Quit and relaunch Pi Mini to try a fresh session.')), 60_000);
+  const timeout = setTimeout(() => reject(new Error('Pi Mini initialization timed out: the extension did not acknowledge instruction insertion within 60 seconds. The outcome is unknown; nothing was resent. Quit and relaunch Pi Mini to try a fresh session.')), 60_000);
   try {
-    const result = await client.runExtensionAction(sessionId, 'pi-mini.initialize');
+    const result = await client.runExtensionAction(sessionId, miniInitializeAction);
     operationId = result.operationId;
     check();
     await finished;

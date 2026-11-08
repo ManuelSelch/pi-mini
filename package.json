@@ -19,7 +19,7 @@
     "install:app": "npm run build:app && ditto 'src-tauri/target/release/bundle/macos/Pi Mini.app' '/Applications/Pi Mini.app'",
     "typecheck": "tsc --noEmit",
     "test": "npm run test:application && npm run test:ui",
-    "test:application": "tsx --test tests/companion/shared-server.scenarios.test.mjs tests/companion/conversation.scenarios.test.mjs tests/conversation/app/*.test.ts tests/conversation/infra/*.test.ts",
+    "test:application": "tsx --test tests/companion/initialization.scenarios.test.mjs tests/companion/shared-server.scenarios.test.mjs tests/companion/conversation.scenarios.test.mjs tests/conversation/app/*.test.ts tests/conversation/infra/*.test.ts",
     "test:ui": "vitest run",
     "build:native-fixture": "esbuild tests/support/lifecycle-fixture.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-host/lifecycle-fixture.mjs",
     "build:native-tools": "swiftc tests/support/native-input.swift -o src-tauri/target/native-input && swiftc tests/support/native-key.swift -o src-tauri/target/native-key",

@@ -2,7 +2,7 @@ import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { getPiChatExtensionRegistry } from '@manuelselch/pi-server/extensions';
 import { companionInstructions } from './host/instructions';
 
-export const miniInitializeAction = 'pi-mini.initialize';
+import { miniInitializeAction, miniInitializedNotification } from '../domain/initialization';
 
 /** Global action registration, with explicit routing to each session's Pi API. */
 export default function miniMode(pi: ExtensionAPI): void {
@@ -26,10 +26,13 @@ export default function miniMode(pi: ExtensionAPI): void {
   registry.registerAction({
     id: miniInitializeAction,
     title: 'Initialize Pi Mini',
-    run: ({ sessionId }) => {
+    run: ({ sessionId, notify }) => {
       const initialize = sessions.get(sessionId);
       if (!initialize) throw new Error('Pi Mini extension is not active in this session.');
       initialize();
+      // The action's final operation event waits for server-side catalogue work.
+      // This session-scoped acknowledgment confirms the instructions are ready now.
+      notify(miniInitializedNotification, 'info');
     },
   });
 }

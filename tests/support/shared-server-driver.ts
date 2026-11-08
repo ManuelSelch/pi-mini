@@ -27,6 +27,12 @@ export class SharedServerDriver {
   private runtimes: AgentSessionRuntime[] = [];
   private error?: Error;
   private unavailablePort?: number;
+  private releaseCatalogue?: () => void;
+  private catalogueGate?: Promise<void>;
+  private heldRefreshes = 0;
+  private catalogueBaseline = 0;
+  private previousProjectSession?: string;
+  private nextProject?: string;
   private connect(endpoint: string) {
     return new PiClient({ endpoint, transport: createWebSocketTransport((url) => new WebSocket(url)) });
   }
@@ -66,7 +72,15 @@ export class SharedServerDriver {
     };
     this.server = createPiServer({ runtimeFactory: { newSession: create, continueProject: create, openSession: async () => { throw new Error('Unexpected open'); } }, catalogue: {
       sessionsDirectory: sessions, metadataFile: join(this.directory, 'projects.json'),
-      lister: { listAll: () => SessionManager.listAll(sessions) }, discovery: { forDirectory: async () => undefined },
+      lister: { listAll: async () => {
+        const initialized = this.runtimes.length > this.catalogueBaseline && this.runtimes.at(-1)?.session.messages.some(message => message.role === 'custom' && message.customType === 'pi-mini-instructions');
+        if (this.catalogueGate && initialized) {
+          this.heldRefreshes++;
+          try { await this.catalogueGate; }
+          finally { this.heldRefreshes--; }
+        }
+        return SessionManager.listAll(sessions);
+      } }, discovery: { forDirectory: async () => undefined },
     } });
     this.server.httpServer.listen(0, '127.0.0.1');
     await once(this.server.httpServer, 'listening');
@@ -139,7 +153,49 @@ export class SharedServerDriver {
     assert.equal(this.server, undefined);
     assert.equal(this.app, undefined);
   }
+  async holdInitializationCatalogueRefresh(): Promise<void> {
+    this.catalogueBaseline = this.runtimes.length;
+    this.catalogueGate = new Promise(resolve => { this.releaseCatalogue = resolve; });
+  }
+  async shouldBeReady(): Promise<void> {
+    assert.equal(this.app!.getView().canSend, true);
+    assert.equal(this.app!.getView().status, 'idle');
+  }
+  async shouldHaveInstructions(): Promise<void> {
+    const state = this.app!.client.getSession(this.app!.getView().sessionId!);
+    const runtime = this.runtimes.find(runtime => runtime.session.sessionManager.getSessionFile() === state?.sessionPath);
+    assert.ok(runtime, 'Selected session must have a real runtime');
+    const instructions = runtime.session.messages.filter(message => message.role === 'custom' && message.customType === 'pi-mini-instructions');
+    assert.equal(instructions.length, 1);
+    assert.match(JSON.stringify(instructions), /Answer briefly by default/);
+  }
+  async shouldHaveCatalogueRefreshPending(): Promise<void> {
+    await this.until(() => this.heldRefreshes > 0, 'catalogue refresh reached the gate');
+    assert.ok(this.releaseCatalogue, 'Catalogue gate must not have been released');
+    const state = this.app!.client.getSession(this.app!.getView().sessionId!);
+    assert.equal(state?.lastOperation, undefined, 'Ready before initialization operation completion');
+  }
+  async switchToAnotherProject(): Promise<void> {
+    this.previousProjectSession = this.app!.getView().sessionId;
+    this.nextProject = join(this.directory!, 'another-project');
+    await mkdir(this.nextProject);
+    let switched: boolean | undefined;
+    const switching = this.app!.switchProject(this.nextProject).then(result => { switched = result; });
+    // Bound failures without releasing the catalogue gate to conceal the regression.
+    await this.until(() => switched !== undefined, 'project switch returns before catalogue completion');
+    await switching;
+    assert.equal(switched, true);
+  }
+  async shouldHaveChangedProject(): Promise<void> {
+    assert.notEqual(this.app!.getView().sessionId, this.previousProjectSession);
+    const selected = this.app!.client.getSession(this.app!.getView().sessionId!);
+    assert.equal(selected?.projectPath, this.nextProject);
+  }
+
   async dispose() {
+    this.releaseCatalogue?.();
+    this.releaseCatalogue = undefined;
+    this.catalogueGate = undefined;
     this.app?.dispose();
     this.chat?.dispose();
     await this.server?.close();
