@@ -23,7 +23,8 @@ pub fn show_and_focus(app: &tauri::AppHandle) -> Result<(), String> {
             #[allow(deprecated)]
             objc2_app_kit::NSApplication::sharedApplication(main).activateIgnoringOtherApps(true);
         }
-    }).map_err(|error| error.to_string())?;
+    })
+    .map_err(|error| error.to_string())?;
     window.set_focus().map_err(|error| error.to_string())?;
     // Window focus alone does not make WKWebView the native keyboard responder.
     let webview: &tauri::Webview = window.as_ref();

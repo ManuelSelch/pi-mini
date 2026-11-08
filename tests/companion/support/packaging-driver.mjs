@@ -21,7 +21,12 @@ export class PackagingDriver {
     this.app = this.installed;
     this.sharedServer = new SharedServerDriver();
     await this.sharedServer.startPiChatServer();
-    this.env = { ...process.env, ...this.sharedServer.connectionEnvironment(), PATH: '/usr/bin:/bin', PI_MINI_NODE: '/nonexistent/node' };
+    this.env = {
+      ...process.env,
+      ...this.sharedServer.connectionEnvironment(),
+      PATH: '/usr/bin:/bin',
+      PI_MINI_NODE: '/nonexistent/node',
+    };
     delete this.env.NODE_PATH;
     delete this.env.NODE_OPTIONS;
   }
@@ -30,9 +35,18 @@ export class PackagingDriver {
     // Deny all checkout reads without renaming or modifying the user's working tree.
     this.profile = join(this.directory, 'no-checkout.sb');
     const canonicalRoot = await realpath(root);
-    await writeFile(this.profile, `(version 1) (allow default) (deny file-read* (subpath ${JSON.stringify(canonicalRoot)}))`);
-    assert.throws(() => execFileSync('/usr/bin/sandbox-exec', ['-f', this.profile, '/bin/ls', canonicalRoot], { stdio: 'pipe' }));
-    assert.throws(() => execFileSync('/usr/bin/env', ['node', '--version'], { env: this.env, stdio: 'pipe' }));
+    await writeFile(
+      this.profile,
+      `(version 1) (allow default) (deny file-read* (subpath ${JSON.stringify(canonicalRoot)}))`,
+    );
+    assert.throws(() =>
+      execFileSync('/usr/bin/sandbox-exec', ['-f', this.profile, '/bin/ls', canonicalRoot], {
+        stdio: 'pipe',
+      }),
+    );
+    assert.throws(() =>
+      execFileSync('/usr/bin/env', ['node', '--version'], { env: this.env, stdio: 'pipe' }),
+    );
   }
 
   async buildAndRelocateApp() {
@@ -49,36 +63,54 @@ export class PackagingDriver {
     const executable = join(this.app, 'Contents/MacOS/pi-mini');
     const command = this.profile ? '/usr/bin/sandbox-exec' : executable;
     const args = this.profile ? ['-f', this.profile, executable, '--smoke-test'] : ['--smoke-test'];
-    this.child = spawn(command, args, { cwd: this.directory, env: this.env, stdio: ['ignore', 'pipe', 'pipe'] });
+    this.child = spawn(command, args, {
+      cwd: this.directory,
+      env: this.env,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
     this.output = '';
     this.errors = '';
-    this.child.stdout.on('data', data => { this.output += data; });
-    this.child.stderr.on('data', data => { this.errors += data; });
+    this.child.stdout.on('data', (data) => {
+      this.output += data;
+    });
+    this.child.stderr.on('data', (data) => {
+      this.errors += data;
+    });
     this.closed = new Promise((resolve, reject) => {
       this.child.once('error', reject);
-      this.child.once('close', code => resolve(code));
+      this.child.once('close', (code) => resolve(code));
     });
     this.backendPids = new Set();
     this.timer = setInterval(() => {
       try {
-        const lines = execFileSync('/bin/ps', ['-axo', 'pid=,ppid=,command='], { encoding: 'utf8' }).split('\n');
+        const lines = execFileSync('/bin/ps', ['-axo', 'pid=,ppid=,command='], {
+          encoding: 'utf8',
+        }).split('\n');
         for (const line of lines) {
           const match = line.trim().match(/^(\d+)\s+(\d+)\s+(.+)$/);
-          if (match && Number(match[2]) === this.child.pid && match[3].includes('/Resources/backend/node'))
+          if (
+            match &&
+            Number(match[2]) === this.child.pid &&
+            match[3].includes('/Resources/backend/node')
+          )
             this.backendPids.add(Number(match[1]));
         }
-      } catch { /* Process may exit between polls; assertions below require observation. */ }
+      } catch {
+        /* Process may exit between polls; assertions below require observation. */
+      }
     }, 20);
     this.deadline = setTimeout(() => this.child.kill('SIGKILL'), 70_000);
   }
 
-  launchRelocatedApp() { return this.launchInstalledApp(); }
+  launchRelocatedApp() {
+    return this.launchInstalledApp();
+  }
 
   async expectCompanionReadyWithSharedServer() {
     assert.equal(await this.closed, 0, this.errors + this.output);
     clearInterval(this.timer);
     clearTimeout(this.deadline);
-    const line = this.output.split('\n').find(line => line.startsWith('MINI_REPORT:'));
+    const line = this.output.split('\n').find((line) => line.startsWith('MINI_REPORT:'));
     assert.ok(line, this.errors + this.output);
     const report = JSON.parse(line.slice('MINI_REPORT:'.length));
     assert.equal(report.error, undefined, JSON.stringify(report));
@@ -93,16 +125,24 @@ export class PackagingDriver {
     const backend = join(this.app, 'Contents/Resources/backend');
     const config = join(backend, 'node_modules/@earendil-works/pi-coding-agent/dist/config.js');
     const probe = `import {getAgentDir} from ${JSON.stringify(new URL('file://' + config).href)}; console.log(getAgentDir());`;
-    const actual = execFileSync(join(backend, 'node'), ['--input-type=module', '-e', probe], { cwd: this.directory, env: this.env, encoding: 'utf8' }).trim();
+    const actual = execFileSync(join(backend, 'node'), ['--input-type=module', '-e', probe], {
+      cwd: this.directory,
+      env: this.env,
+      encoding: 'utf8',
+    }).trim();
     const { getAgentDir } = await import('@earendil-works/pi-coding-agent');
-    assert.equal(actual, getAgentDir(), 'Bundled Pi must use the same user configuration directory, not copy credentials');
+    assert.equal(
+      actual,
+      getAgentDir(),
+      'Bundled Pi must use the same user configuration directory, not copy credentials',
+    );
   }
 
   async launchInstalledAppWithUnrelatedService() {
     await this.buildAndInstallApp();
     await this.makeCheckoutAndSystemNodeUnavailable();
-    this.service = createServer(socket => socket.end('unrelated service'));
-    await new Promise(resolve => this.service.listen(0, '127.0.0.1', resolve));
+    this.service = createServer((socket) => socket.end('unrelated service'));
+    await new Promise((resolve) => this.service.listen(0, '127.0.0.1', resolve));
     this.port = this.service.address().port;
     await this.launchInstalledApp();
   }
@@ -116,7 +156,9 @@ export class PackagingDriver {
     for (const pid of this.backendPids) {
       let stopped = false;
       for (let attempt = 0; attempt < 100; attempt++) {
-        try { process.kill(pid, 0); } catch (error) {
+        try {
+          process.kill(pid, 0);
+        } catch (error) {
           if (error.code !== 'ESRCH') throw error;
           stopped = true;
           break;
@@ -133,7 +175,9 @@ export class PackagingDriver {
       let text = '';
       const socket = createConnection({ host: '127.0.0.1', port: this.port });
       socket.setTimeout(2000, () => socket.destroy(new Error('Unrelated service timed out')));
-      socket.on('data', data => { text += data; });
+      socket.on('data', (data) => {
+        text += data;
+      });
       socket.once('end', () => resolve(text));
       socket.once('error', reject);
     });
@@ -148,7 +192,7 @@ export class PackagingDriver {
       await this.closed;
     }
     if (this.backendPids) await this.expectOwnedBackendStopped();
-    if (this.service) await new Promise(resolve => this.service.close(resolve));
+    if (this.service) await new Promise((resolve) => this.service.close(resolve));
     await this.sharedServer?.dispose();
     if (this.directory) await rm(this.directory, { recursive: true, force: true });
   }

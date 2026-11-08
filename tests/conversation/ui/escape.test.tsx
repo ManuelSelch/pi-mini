@@ -6,17 +6,44 @@ import { Conversation } from '../../../src/conversation/app/conversation';
 import { emptyView } from '../../../src/conversation/domain/view';
 import { ConversationContainer } from '../../../src/conversation/ui/containers/conversation-container';
 
-Object.defineProperty(window, 'matchMedia', { value: (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }) });
-Object.assign(globalThis, { ResizeObserver: class { observe() {} unobserve() {} disconnect() {} } });
+Object.defineProperty(window, 'matchMedia', {
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener() {},
+    removeEventListener() {},
+  }),
+});
+Object.assign(globalThis, {
+  ResizeObserver: class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  },
+});
 Object.defineProperty(document, 'fonts', { value: new window.EventTarget(), configurable: true });
 afterEach(cleanup);
 
 function fixture(running: boolean) {
-  const client = new PiClient({ endpoint: 'ws://127.0.0.1:1/ws', transport: () => { throw new Error('Not connected'); } });
+  const client = new PiClient({
+    endpoint: 'ws://127.0.0.1:1/ws',
+    transport: () => {
+      throw new Error('Not connected');
+    },
+  });
   const conversation = new Conversation(client, '/workspace');
-  vi.spyOn(conversation, 'getView').mockReturnValue({ ...emptyView, status: running ? 'running' : 'idle', canSend: !running, canStop: running });
+  vi.spyOn(conversation, 'getView').mockReturnValue({
+    ...emptyView,
+    status: running ? 'running' : 'idle',
+    canSend: !running,
+    canStop: running,
+  });
   const stop = vi.spyOn(conversation, 'stop').mockResolvedValue();
-  const ui = render(<MantineProvider><ConversationContainer conversation={conversation} onDrag={() => {}} focusRequest={0}/></MantineProvider>);
+  const ui = render(
+    <MantineProvider>
+      <ConversationContainer conversation={conversation} onDrag={() => {}} focusRequest={0} />
+    </MantineProvider>,
+  );
   return { ui, stop };
 }
 

@@ -5,7 +5,9 @@ import { useNativeLifecycle } from '../../../src/lifecycle/app/use-native-lifecy
 const native = vi.hoisted(() => ({ invoke: vi.fn(), listen: vi.fn(), focus: vi.fn() }));
 vi.mock('@tauri-apps/api/core', () => ({ isTauri: () => true, invoke: native.invoke }));
 vi.mock('@tauri-apps/api/event', () => ({ listen: native.listen }));
-vi.mock('@tauri-apps/api/window', () => ({ getCurrentWindow: () => ({ onFocusChanged: native.focus }) }));
+vi.mock('@tauri-apps/api/window', () => ({
+  getCurrentWindow: () => ({ onFocusChanged: native.focus }),
+}));
 
 let handlers: Map<string, (event: { payload: unknown }) => void>;
 let focus: (event: { payload: boolean }) => void;
@@ -70,7 +72,12 @@ test('shortcut registration failure is surfaced even when it predates JavaScript
 test('a native listener resolving after unmount is released immediately', async () => {
   const release = vi.fn();
   let resolve!: (unlisten: () => void) => void;
-  native.listen.mockImplementationOnce(() => new Promise<() => void>((done) => { resolve = done; }));
+  native.listen.mockImplementationOnce(
+    () =>
+      new Promise<() => void>((done) => {
+        resolve = done;
+      }),
+  );
   const { unmount } = renderHook(() => useNativeLifecycle(onError));
 
   unmount();

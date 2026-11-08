@@ -1,0 +1,50 @@
+prepare:
+  command: [npm, ci]
+  cwd: .
+  timeoutSeconds: 600
+suites:
+  lint:
+    command: [npm, run, lint]
+    cwd: .
+    timeoutSeconds: 300
+    auto: after-agent
+  format:
+    command: [npm, run, check:format]
+    cwd: .
+    timeoutSeconds: 300
+    auto: after-agent
+  rust-format:
+    command: [npm, run, check:rustfmt]
+    cwd: .
+    timeoutSeconds: 300
+    auto: after-agent
+  types:
+    command: [npm, run, typecheck]
+    cwd: .
+    timeoutSeconds: 300
+    auto: after-agent
+  knip:
+    command: [npm, run, check:knip]
+    cwd: .
+    timeoutSeconds: 300
+    auto: after-agent
+  test:
+    command: [npm, test]
+    cwd: .
+    timeoutSeconds: 600
+    auto: after-agent
+  build:
+    command: [npm, run, build]
+    cwd: .
+    timeoutSeconds: 600
+    auto: manual
+  native-test:
+    command: [npm, run, test:native]
+    cwd: .
+    timeoutSeconds: 900
+    auto: manual
+  packaging:
+    command: [npm, run, test:packaging]
+    cwd: .
+    timeoutSeconds: 1800
+    auto: manual

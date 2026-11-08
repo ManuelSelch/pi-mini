@@ -2,8 +2,12 @@ import { test, beforeEach, afterEach } from 'node:test';
 import { SharedServerDriver } from './support/shared-server-driver.mjs';
 
 let app;
-beforeEach(() => { app = new SharedServerDriver(); });
-afterEach(async () => { await app.dispose(); });
+beforeEach(() => {
+  app = new SharedServerDriver();
+});
+afterEach(async () => {
+  await app.dispose();
+});
 
 // Real Pi extension/runtime, shared server, SDK and storage; controlled model boundary.
 // Does not automate the Pi Chat browser UI.

@@ -2,8 +2,12 @@ import { test, beforeEach, afterEach } from 'node:test';
 import { RemainingMvpDriver } from './support/remaining-mvp-driver.mjs';
 
 let app;
-beforeEach(() => { app = new RemainingMvpDriver(); });
-afterEach(async () => { await app.dispose(); });
+beforeEach(() => {
+  app = new RemainingMvpDriver();
+});
+afterEach(async () => {
+  await app.dispose();
+});
 
 // Drafts: native menu-bar interactions and system presence require driver implementation.
 test('menu bar restores the hidden companion without losing its draft', async () => {

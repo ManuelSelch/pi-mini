@@ -15,8 +15,14 @@ test('reconnecting during a run does not present a suffix as a complete answer',
 
     await app.expectLatestAssistant('Check the cable.');
 
-    await app.agentFinishes('Check the cable. Do not open the power supply. Then tell me what you see.');
+    await app.agentFinishes(
+      'Check the cable. Do not open the power supply. Then tell me what you see.',
+    );
 
-    await app.expectLatestAssistant('Check the cable. Do not open the power supply. Then tell me what you see.');
-  } finally { await app.dispose(); }
+    await app.expectLatestAssistant(
+      'Check the cable. Do not open the power supply. Then tell me what you see.',
+    );
+  } finally {
+    await app.dispose();
+  }
 });

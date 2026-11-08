@@ -14,9 +14,16 @@ export default function miniMode(pi: ExtensionAPI): void {
     if (sessionId && sessions.get(sessionId) === initialize) sessions.delete(sessionId);
     sessionId = ctx.sessionManager.getSessionId();
     initialize = () => {
-      const alreadyInitialized = ctx.sessionManager.getBranch().some((entry) => entry.type === 'custom_message' && entry.customType === 'pi-mini-instructions');
+      const alreadyInitialized = ctx.sessionManager
+        .getBranch()
+        .some(
+          (entry) => entry.type === 'custom_message' && entry.customType === 'pi-mini-instructions',
+        );
       if (alreadyInitialized) return;
-      pi.sendMessage({ customType: 'pi-mini-instructions', content: companionInstructions, display: false }, { triggerTurn: false });
+      pi.sendMessage(
+        { customType: 'pi-mini-instructions', content: companionInstructions, display: false },
+        { triggerTurn: false },
+      );
     };
     sessions.set(sessionId, initialize);
   });

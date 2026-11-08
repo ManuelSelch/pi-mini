@@ -12,18 +12,40 @@ export class NativeDriver {
 
   async launch({ model = false } = {}) {
     const directory = await realpath(await mkdtemp(join(tmpdir(), 'pi-mini-native-')));
-    const executable = fileURLToPath(new URL('../../src-tauri/target/debug/pi-mini', import.meta.url));
+    const executable = fileURLToPath(
+      new URL('../../src-tauri/target/debug/pi-mini', import.meta.url),
+    );
     const server = model ? undefined : new SharedServerDriver();
     await server?.startPiChatServer();
-    const child = spawn(executable, [model ? '--model-smoke' : '--smoke-test'], { env: { ...process.env, ...server?.connectionEnvironment(), PI_MINI_SMOKE_DATA_DIR: directory }, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(executable, [model ? '--model-smoke' : '--smoke-test'], {
+      env: {
+        ...process.env,
+        ...server?.connectionEnvironment(),
+        PI_MINI_SMOKE_DATA_DIR: directory,
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
     let stdout = '';
     let stderr = '';
-    child.stdout.on('data', (data) => { stdout = (stdout + data.toString()).slice(-1_000_000); });
-    child.stderr.on('data', (data) => { stderr = (stderr + data.toString()).slice(-1_000_000); });
+    child.stdout.on('data', (data) => {
+      stdout = (stdout + data.toString()).slice(-1_000_000);
+    });
+    child.stderr.on('data', (data) => {
+      stderr = (stderr + data.toString()).slice(-1_000_000);
+    });
     let timedOut = false;
-    const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, model ? 150_000 : 70_000);
+    const timer = setTimeout(
+      () => {
+        timedOut = true;
+        child.kill('SIGKILL');
+      },
+      model ? 150_000 : 70_000,
+    );
     try {
-      const code = await new Promise((resolve, reject) => { child.once('error', reject); child.once('close', resolve); });
+      const code = await new Promise((resolve, reject) => {
+        child.once('error', reject);
+        child.once('close', resolve);
+      });
       assert.equal(timedOut, false, `Native startup timed out. ${stderr}`);
       const line = stdout.split('\n').find((line) => line.startsWith('MINI_REPORT:'));
       assert.ok(line, `No WebView report. ${stderr}\n${stdout}`);

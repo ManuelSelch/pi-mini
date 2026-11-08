@@ -9,8 +9,18 @@ function fixture() {
   let connection: Parameters<PiClient['subscribe']>[0] | undefined;
   let calls = 0;
   const client = {
-    onMessage: (callback: typeof receive) => { receive = callback; return () => { receive = undefined; }; },
-    subscribe: (callback: typeof connection) => { connection = callback; return () => { connection = undefined; }; },
+    onMessage: (callback: typeof receive) => {
+      receive = callback;
+      return () => {
+        receive = undefined;
+      };
+    },
+    subscribe: (callback: typeof connection) => {
+      connection = callback;
+      return () => {
+        connection = undefined;
+      };
+    },
     runExtensionAction: async (id: string, action: string) => {
       calls++;
       assert.equal(id, 'session');
@@ -18,15 +28,51 @@ function fixture() {
       return { state: 'accepted', operationId: 'operation' };
     },
   } as unknown as PiClient;
-  const finish = (outcome: 'completed' | 'failed') => receive?.({ version: 2, type: 'event', event: 'operation.finished', serverInstanceId: 'server', sessionId: 'session', sequence: 1, data: { operationId: 'operation', requestId: 'request', ...(outcome === 'failed' ? { outcome, error: { code: 'operationFailed', message: 'Missing extension' } } : { outcome }) } });
-  const acknowledge = (sessionId = 'session', message = miniInitializedNotification) => receive?.({ version: 2, type: 'event', event: 'notification.created', serverInstanceId: 'server', sessionId, sequence: 1, data: { level: 'info', message } });
-  return { client, finish, acknowledge, get calls() { return calls; }, get disposed() { return !receive && !connection; } };
+  const finish = (outcome: 'completed' | 'failed') =>
+    receive?.({
+      version: 2,
+      type: 'event',
+      event: 'operation.finished',
+      serverInstanceId: 'server',
+      sessionId: 'session',
+      sequence: 1,
+      data: {
+        operationId: 'operation',
+        requestId: 'request',
+        ...(outcome === 'failed'
+          ? { outcome, error: { code: 'operationFailed', message: 'Missing extension' } }
+          : { outcome }),
+      },
+    });
+  const acknowledge = (sessionId = 'session', message = miniInitializedNotification) =>
+    receive?.({
+      version: 2,
+      type: 'event',
+      event: 'notification.created',
+      serverInstanceId: 'server',
+      sessionId,
+      sequence: 1,
+      data: { level: 'info', message },
+    });
+  return {
+    client,
+    finish,
+    acknowledge,
+    get calls() {
+      return calls;
+    },
+    get disposed() {
+      return !receive && !connection;
+    },
+  };
 }
 
 test('initialization waits for the instruction acknowledgment, not merely an accepted receipt', async () => {
   const app = fixture();
   let initialized = false;
-  const pending = initializeMiniSession(app.client, 'session').then(() => { initialized = true; });
+  const pending = initializeMiniSession(app.client, 'session').then(() => {
+    initialized = true;
+  });
   await Promise.resolve();
 
   assert.equal(initialized, false);
@@ -42,7 +88,9 @@ test('initialization tolerates delayed instruction insertion without retrying', 
   context.mock.timers.enable({ apis: ['setTimeout'] });
   const app = fixture();
   let initialized = false;
-  const pending = initializeMiniSession(app.client, 'session').then(() => { initialized = true; });
+  const pending = initializeMiniSession(app.client, 'session').then(() => {
+    initialized = true;
+  });
   await Promise.resolve();
 
   context.mock.timers.tick(20_000);
@@ -74,7 +122,9 @@ test('an unanswered initialization has a bounded deadline without blaming extens
 test('unrelated notifications and other sessions do not unlock initialization', async () => {
   const app = fixture();
   let initialized = false;
-  const pending = initializeMiniSession(app.client, 'session').then(() => { initialized = true; });
+  const pending = initializeMiniSession(app.client, 'session').then(() => {
+    initialized = true;
+  });
   app.acknowledge('other-session');
   app.acknowledge('session', 'Unrelated notification');
   await Promise.resolve();

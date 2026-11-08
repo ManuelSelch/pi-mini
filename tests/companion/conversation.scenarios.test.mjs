@@ -2,8 +2,12 @@ import { test, beforeEach, afterEach } from 'node:test';
 import { CompanionDriver } from './support/companion-driver.mjs';
 
 let app;
-beforeEach(() => { app = new CompanionDriver(); });
-afterEach(async () => { await app.dispose(); });
+beforeEach(() => {
+  app = new CompanionDriver();
+});
+afterEach(async () => {
+  await app.dispose();
+});
 
 // Real SDK + isolated real server; controlled agent events, not a provider run.
 // Protocol/application coverage does not establish native focus or visual rendering.

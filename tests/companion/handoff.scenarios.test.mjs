@@ -2,8 +2,12 @@ import { test, beforeEach, afterEach } from 'node:test';
 import { HandoffDriver } from './support/handoff-driver.mjs';
 
 let app;
-beforeEach(() => { app = new HandoffDriver(); });
-afterEach(async () => { await app.dispose(); });
+beforeEach(() => {
+  app = new HandoffDriver();
+});
+afterEach(async () => {
+  await app.dispose();
+});
 
 // Deferred by the user to the next step; not implemented or approved.
 // Explicitly throwing driver scaffolds, never skipped/passing coverage.

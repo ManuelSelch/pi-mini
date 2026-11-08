@@ -9,8 +9,12 @@ export function useNativeLifecycle(onError: (error: unknown) => void): number {
     if (!isTauri()) return;
     let disposed = false;
     const subscriptions: UnlistenFn[] = [];
-    const focus = () => { if (!disposed) setFocusRequest((value) => value + 1); };
-    const report = (error: unknown) => { if (!disposed) onError(error); };
+    const focus = () => {
+      if (!disposed) setFocusRequest((value) => value + 1);
+    };
+    const report = (error: unknown) => {
+      if (!disposed) onError(error);
+    };
     const retain = async (pending: Promise<UnlistenFn>) => {
       const unlisten = await pending;
       if (disposed) unlisten();
@@ -18,10 +22,18 @@ export function useNativeLifecycle(onError: (error: unknown) => void): number {
     };
     void Promise.all([
       retain(listen('companion:shown', focus)),
-      retain(listen<string>('companion:lifecycle-error', (event) => report(new Error(event.payload)))),
-      retain(getCurrentWindow().onFocusChanged((event) => { if (event.payload) focus(); })),
+      retain(
+        listen<string>('companion:lifecycle-error', (event) => report(new Error(event.payload))),
+      ),
+      retain(
+        getCurrentWindow().onFocusChanged((event) => {
+          if (event.payload) focus();
+        }),
+      ),
     ]).catch(report);
-    void invoke<string | null>('lifecycle_error').then((error) => { if (error) report(new Error(error)); }, report);
+    void invoke<string | null>('lifecycle_error').then((error) => {
+      if (error) report(new Error(error));
+    }, report);
     return () => {
       disposed = true;
       for (const unlisten of subscriptions) unlisten();

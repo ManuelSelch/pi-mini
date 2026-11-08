@@ -6,8 +6,21 @@ import { CompanionView } from '../../../src/conversation/ui/components/companion
 import { emptyView } from '../../../src/conversation/domain/view';
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
-Object.defineProperty(window, 'matchMedia', { value: (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }) });
-Object.assign(globalThis, { ResizeObserver: class { observe() {} unobserve() {} disconnect() {} } });
+Object.defineProperty(window, 'matchMedia', {
+  value: (query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener() {},
+    removeEventListener() {},
+  }),
+});
+Object.assign(globalThis, {
+  ResizeObserver: class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  },
+});
 Object.defineProperty(document, 'fonts', { value: new window.EventTarget(), configurable: true });
 afterEach(cleanup);
 
@@ -15,7 +28,19 @@ class MarkdownResponseDriver {
   private ui?: RenderResult;
 
   async showResponse(text: string): Promise<void> {
-    const element = <MantineProvider forceColorScheme="dark"><CompanionView view={{ ...emptyView, response: text, status: 'idle', canSend: true }} composer={null} onDrag={() => {}} onSend={() => {}} onAnswer={() => {}} onCancel={() => {}} onTakeControl={() => {}}/></MantineProvider>;
+    const element = (
+      <MantineProvider forceColorScheme="dark">
+        <CompanionView
+          view={{ ...emptyView, response: text, status: 'idle', canSend: true }}
+          composer={null}
+          onDrag={() => {}}
+          onSend={() => {}}
+          onAnswer={() => {}}
+          onCancel={() => {}}
+          onTakeControl={() => {}}
+        />
+      </MantineProvider>
+    );
     if (this.ui) this.ui.rerender(element);
     else this.ui = render(element);
   }
@@ -45,7 +70,9 @@ class MarkdownResponseDriver {
 
 test('assistant responses show pi-chat style Markdown, code, tables and math', async () => {
   const app = new MarkdownResponseDriver();
-  await app.showResponse('## Setup\n\n**Important**\n\n- Install\n\n```js\nconst x = 1;\n```\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n$$\nx^2\n$$');
+  await app.showResponse(
+    '## Setup\n\n**Important**\n\n- Install\n\n```js\nconst x = 1;\n```\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n$$\nx^2\n$$',
+  );
   await app.expectFormattedContent();
 });
 

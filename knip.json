@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["tests/**/*.{ts,tsx,mjs}", "scripts/*.mjs"],
+  "project": ["src/**/*.{ts,tsx,css}", "tests/**/*.{ts,tsx,mjs}", "scripts/*.mjs"],
+  "ignoreDependencies": [
+    "@earendil-works/chord",
+    "@earendil-works/pi-agent-core",
+    "@earendil-works/pi-ai",
+    "@earendil-works/pi-codemode",
+    "@earendil-works/pi-mcp",
+    "@earendil-works/pi-telemetry",
+    "@earendil-works/pi-tui"
+  ],
+  "ignoreBinaries": ["ditto", "swiftc"],
+  "ignoreExportsUsedInFile": true
+}

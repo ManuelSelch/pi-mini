@@ -2,8 +2,12 @@ import { test, beforeEach, afterEach } from 'node:test';
 import { PackagingDriver } from './support/packaging-driver.mjs';
 
 let app;
-beforeEach(() => { app = new PackagingDriver(); });
-afterEach(async () => { await app.dispose(); });
+beforeEach(() => {
+  app = new PackagingDriver();
+});
+afterEach(async () => {
+  await app.dispose();
+});
 
 // Real packaged WebView/SDK smoke; no model calls or browser automation.
 // Builds run via test:packaging; each scenario uses an isolated installation.

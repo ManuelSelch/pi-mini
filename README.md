@@ -6,6 +6,12 @@ it away when already focused. Escape closes the project switcher or stops the
 current run; window close hides the app without stopping work. Pi Chat handoff is explicitly deferred to the next step; the title action
 stays disabled. [Current scope and deferred handoff proposal](plans/companion-mvp/LIFECYCLE-HANDOFF.md).
 
+## Static checks and local pipeline
+
+Run `npm run lint`, `npm run check:format`, `npm run typecheck`, `npm run check:knip`, and `npm run check:rustfmt` for static checks. `npm run lint:fix` and `npm run format` apply automatic fixes. The local pipeline runs these checks and application/UI tests after agent changes; build, native tests, and packaging are manual suites. Native and packaging suites require macOS and the relevant system tools.
+
+Knip retains the explicitly pinned Pi runtime packages needed by the bundled server and ignores system binaries; CSS dependencies are checked via their imports. Disposable mockups and temporary plans are excluded from formatting.
+
 ## Run locally
 
 Requirements: macOS, Node >=22.19, Rust >=1.90, and Xcode Command Line Tools.

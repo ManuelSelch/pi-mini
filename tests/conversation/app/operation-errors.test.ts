@@ -11,5 +11,7 @@ test('an operation failure after admission remains visible even without a runtim
     // The server deliberately sanitizes unclassified exceptions on operation events.
     await app.expectVisibleError('The server operation failed.');
     await app.expectComposerAvailable();
-  } finally { await app.dispose(); }
+  } finally {
+    await app.dispose();
+  }
 });

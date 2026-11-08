@@ -1,7 +1,7 @@
 @layer theme, base, mantine, components, utilities;
-@import "tailwindcss/theme.css" layer(theme);
-@import "@mantine/core/styles.layer.css";
-@import "tailwindcss/utilities.css" layer(utilities);
+@import 'tailwindcss/theme.css' layer(theme);
+@import '@mantine/core/styles.layer.css';
+@import 'tailwindcss/utilities.css' layer(utilities);
 
 @theme {
   --color-page: #242424;
@@ -15,11 +15,27 @@
   --color-ready: #8cbd94;
   --color-waiting: #c0a0ee;
   --color-reconnecting: #e4b56b;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-:root { color-scheme: dark; font-family: var(--font-sans); color: var(--color-ink); }
-html, body { margin: 0; background: transparent; }
-* { box-sizing: border-box; }
-button, textarea { font-family: inherit; }
-button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+:root {
+  color-scheme: dark;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+}
+html,
+body {
+  margin: 0;
+  background: transparent;
+}
+* {
+  box-sizing: border-box;
+}
+button,
+textarea {
+  font-family: inherit;
+}
+button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}

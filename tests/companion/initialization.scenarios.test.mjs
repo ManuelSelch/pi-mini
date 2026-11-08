@@ -2,8 +2,12 @@ import { test, beforeEach, afterEach } from 'node:test';
 import { SharedServerDriver } from './support/shared-server-driver.mjs';
 
 let app;
-beforeEach(() => { app = new SharedServerDriver(); });
-afterEach(async () => { await app.dispose(); });
+beforeEach(() => {
+  app = new SharedServerDriver();
+});
+afterEach(async () => {
+  await app.dispose();
+});
 
 // Real extension/runtime/server/SDK. Block catalogue completion deterministically,
 // not with timing sleeps. No browser rendering or model requests.

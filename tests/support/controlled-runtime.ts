@@ -18,21 +18,38 @@ export class ControlledRuntime extends FakeRuntimeAdapter {
   readonly sent: string[] = [];
   abortCount = 0;
 
-  constructor(readonly runtimeId: string, readonly projectPath: string, readonly sessionsDirectory: string) { super(runtimeId); }
+  constructor(
+    readonly runtimeId: string,
+    readonly projectPath: string,
+    readonly sessionsDirectory: string,
+  ) {
+    super(runtimeId);
+  }
 
   override snapshot(): RuntimeSnapshot {
-    return { ...super.snapshot(), sessionId: this.runtimeId, projectPath: this.projectPath,
-      sessionPath: join(this.sessionsDirectory, `${this.runtimeId}.jsonl`), messages: [...this.history],
-      isStreaming: this.activeRun, lastError: this.lastError };
+    return {
+      ...super.snapshot(),
+      sessionId: this.runtimeId,
+      projectPath: this.projectPath,
+      sessionPath: join(this.sessionsDirectory, `${this.runtimeId}.jsonl`),
+      messages: [...this.history],
+      isStreaming: this.activeRun,
+      lastError: this.lastError,
+    };
   }
 
   override subscribe(listener: (event: RuntimeEvent) => void): () => void {
     this.observers.add(listener);
     const unsubscribe = super.subscribe(listener);
-    return () => { this.observers.delete(listener); unsubscribe(); };
+    return () => {
+      this.observers.delete(listener);
+      unsubscribe();
+    };
   }
 
-  private publish(event: RuntimeEvent): void { for (const observer of this.observers) observer(event); }
+  private publish(event: RuntimeEvent): void {
+    for (const observer of this.observers) observer(event);
+  }
 
   override prompt(text: string): Promise<void> {
     if (this.activeRun) throw new Error('Already running');
@@ -45,10 +62,19 @@ export class ControlledRuntime extends FakeRuntimeAdapter {
     this.publish({ type: 'messageFinal', runId: this.runId, message });
     this.activeRun = true;
     this.publish({ type: 'runtimeStatus', status: 'running' });
-    return new Promise((resolve, reject) => { this.resolveRun = resolve; this.rejectRun = reject; });
+    return new Promise((resolve, reject) => {
+      this.resolveRun = resolve;
+      this.rejectRun = reject;
+    });
   }
 
-  think(): void { this.publish({ type: 'thinkingDelta', runId: this.runId, delta: 'Checking the next useful action' }); }
+  think(): void {
+    this.publish({
+      type: 'thinkingDelta',
+      runId: this.runId,
+      delta: 'Checking the next useful action',
+    });
+  }
 
   stream(text: string): void {
     this.draft += text;
@@ -59,7 +85,10 @@ export class ControlledRuntime extends FakeRuntimeAdapter {
     const message: ChatMessage = { id: `${this.runId}-assistant`, role: 'assistant', text };
     this.history.push(message);
     this.publish({ type: 'messageFinal', runId: this.runId, message });
-    await writeFile(this.snapshot().sessionPath!, this.history.map((entry) => JSON.stringify(entry)).join('\n'));
+    await writeFile(
+      this.snapshot().sessionPath!,
+      this.history.map((entry) => JSON.stringify(entry)).join('\n'),
+    );
     this.activeRun = false;
     this.publish({ type: 'runtimeStatus', status: 'idle' });
     this.resolveRun?.();

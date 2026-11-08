@@ -10,23 +10,25 @@
   },
   "app": {
     "macOSPrivateApi": true,
-    "windows": [{
-      "label": "main",
-      "title": "Pi Mini",
-      "width": 360,
-      "height": 380,
-      "minWidth": 360,
-      "minHeight": 380,
-      "maxWidth": 360,
-      "maxHeight": 380,
-      "center": true,
-      "decorations": false,
-      "resizable": false,
-      "maximizable": false,
-      "alwaysOnTop": true,
-      "transparent": true,
-      "backgroundColor": "#00000000"
-    }],
+    "windows": [
+      {
+        "label": "main",
+        "title": "Pi Mini",
+        "width": 360,
+        "height": 380,
+        "minWidth": 360,
+        "minHeight": 380,
+        "maxWidth": 360,
+        "maxHeight": 380,
+        "center": true,
+        "decorations": false,
+        "resizable": false,
+        "maximizable": false,
+        "alwaysOnTop": true,
+        "transparent": true,
+        "backgroundColor": "#00000000"
+      }
+    ],
     "security": {
       "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost; img-src 'self' data:",
       "devCsp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost http://localhost:4747 ws://localhost:4747; img-src 'self' data:"

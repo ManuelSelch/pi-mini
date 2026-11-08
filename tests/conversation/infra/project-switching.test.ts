@@ -6,7 +6,10 @@ import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import WebSocket from 'ws';
 import { PiClient, createWebSocketTransport } from '@manuelselch/pi-sdk';
-import { importKnownProjects, startCompanionHost } from '../../../src/conversation/infra/host/server';
+import {
+  importKnownProjects,
+  startCompanionHost,
+} from '../../../src/conversation/infra/host/server';
 import { Conversation } from '../../../src/conversation/app/conversation';
 import { ControlledRuntime } from '../../support/controlled-runtime';
 
@@ -30,13 +33,18 @@ test('project discovery imports paths without copying Pi Chat history', async ()
     const metadata = join(root, 'mini.json');
     await mkdir(project);
     await mkdir(join(agent, 'pi-chat'), { recursive: true });
-    await writeFile(join(agent, 'pi-chat', 'projects.json'), JSON.stringify({ pins: [project], archives: [{ firstMessage: 'private transcript' }] }));
+    await writeFile(
+      join(agent, 'pi-chat', 'projects.json'),
+      JSON.stringify({ pins: [project], archives: [{ firstMessage: 'private transcript' }] }),
+    );
     await importKnownProjects(metadata, agent, async () => [{ cwd: project }]);
     const imported = JSON.parse(await readFile(metadata, 'utf8'));
     assert.deepEqual(imported.pins, [project]);
     assert.deepEqual(imported.archives, []);
     assert.doesNotMatch(JSON.stringify(imported), /private transcript/);
-  } finally { await rm(root, { recursive: true, force: true }); }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test('selecting a project always creates a new session without reusing the previous answer', async () => {
@@ -47,12 +55,27 @@ test('selecting a project always creates a new session without reusing the previ
   await Promise.all([mkdir(first), mkdir(second)]);
   let count = 0;
   const paths: string[] = [];
-  const host = await startCompanionHost({ dataDirectory: join(root, 'data'), projectPath: first, discoverProjects: false, runtimeFactory: {
-    newSession: async (path) => { paths.push(path); return new ControlledRuntime(`session-${++count}`, path, sessions); },
-    continueProject: async () => { throw new Error('Unexpected resume'); },
-    openSession: async () => { throw new Error('Unexpected open'); },
-  } });
-  const client = new PiClient({ endpoint: host.info.endpoint, transport: createWebSocketTransport((url) => new WebSocket(url)) });
+  const host = await startCompanionHost({
+    dataDirectory: join(root, 'data'),
+    projectPath: first,
+    discoverProjects: false,
+    runtimeFactory: {
+      newSession: async (path) => {
+        paths.push(path);
+        return new ControlledRuntime(`session-${++count}`, path, sessions);
+      },
+      continueProject: async () => {
+        throw new Error('Unexpected resume');
+      },
+      openSession: async () => {
+        throw new Error('Unexpected open');
+      },
+    },
+  });
+  const client = new PiClient({
+    endpoint: host.info.endpoint,
+    transport: createWebSocketTransport((url) => new WebSocket(url)),
+  });
   const app = new Conversation(client, first);
   try {
     app.start();

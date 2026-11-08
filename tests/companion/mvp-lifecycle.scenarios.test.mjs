@@ -2,8 +2,12 @@ import { test, beforeEach, afterEach } from 'node:test';
 import { RemainingMvpDriver } from './support/remaining-mvp-driver.mjs';
 
 let app;
-beforeEach(() => { app = new RemainingMvpDriver(); });
-afterEach(async () => { await app.dispose(); });
+beforeEach(() => {
+  app = new RemainingMvpDriver();
+});
+afterEach(async () => {
+  await app.dispose();
+});
 
 // Approved native lifecycle scenarios; Pi Chat handoff is deferred separately.
 // Run serially through npm run test:native (macOS event-post permission).

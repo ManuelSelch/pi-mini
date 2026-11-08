@@ -9,16 +9,29 @@ interface NativeSocket {
 type Connect = (endpoint: string, config: ConnectionConfig) => Promise<NativeSocket>;
 
 /** Native socket: no forged browser Origin and no relaxation of server policy. */
-export function createNativeTransport(connect: Connect = NativeWebSocket.connect): TransportFactory {
+export function createNativeTransport(
+  connect: Connect = NativeWebSocket.connect,
+): TransportFactory {
   return (endpoint, handlers) => {
     const url = new URL(endpoint);
-    if (url.protocol !== 'ws:' || url.hostname !== '127.0.0.1' || url.pathname !== '/ws' || url.username || url.password || url.search || url.hash) throw new Error('Only a private loopback endpoint is allowed.');
+    if (
+      url.protocol !== 'ws:' ||
+      url.hostname !== '127.0.0.1' ||
+      url.pathname !== '/ws' ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash
+    )
+      throw new Error('Only a private loopback endpoint is allowed.');
     let socket: NativeSocket | undefined;
     let unlisten: (() => void) | undefined;
     let closed = false;
     let bufferedBytes = 0;
     let sending = Promise.resolve();
-    const disconnect = (connection: NativeSocket) => { void connection.disconnect().catch(() => {}); };
+    const disconnect = (connection: NativeSocket) => {
+      void connection.disconnect().catch(() => {});
+    };
     const close = () => {
       if (closed) return;
       closed = true;
@@ -31,8 +44,16 @@ export function createNativeTransport(connect: Connect = NativeWebSocket.connect
       handlers.close({ code: 1006, reason: 'Native WebSocket connection failed' });
       close();
     };
-    void connect(endpoint, { maxMessageSize: 16_777_216, maxFrameSize: 16_777_216, maxWriteBufferSize: 20_971_520, writeBufferSize: 0 }).then((connection) => {
-      if (closed) { disconnect(connection); return; }
+    void connect(endpoint, {
+      maxMessageSize: 16_777_216,
+      maxFrameSize: 16_777_216,
+      maxWriteBufferSize: 20_971_520,
+      writeBufferSize: 0,
+    }).then((connection) => {
+      if (closed) {
+        disconnect(connection);
+        return;
+      }
       socket = connection;
       unlisten = connection.addListener((message) => {
         if (closed) return;
@@ -48,10 +69,23 @@ export function createNativeTransport(connect: Connect = NativeWebSocket.connect
       send(text) {
         if (closed || !socket) throw new Error('Native socket is not connected.');
         const size = new TextEncoder().encode(text).byteLength;
-        if (bufferedBytes + size > 4_194_304) throw new Error('Native socket send buffer limit exceeded.');
+        if (bufferedBytes + size > 4_194_304)
+          throw new Error('Native socket send buffer limit exceeded.');
         bufferedBytes += size;
         const target = socket;
-        sending = sending.then(async () => { if (!closed) await target.send(text); }).then(() => { bufferedBytes -= size; }, (error: unknown) => { bufferedBytes -= size; fail(error); });
+        sending = sending
+          .then(async () => {
+            if (!closed) await target.send(text);
+          })
+          .then(
+            () => {
+              bufferedBytes -= size;
+            },
+            (error: unknown) => {
+              bufferedBytes -= size;
+              fail(error);
+            },
+          );
       },
       close,
       dispose: close,
