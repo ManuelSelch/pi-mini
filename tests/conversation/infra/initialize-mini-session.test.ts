@@ -36,6 +36,39 @@ test('initialization waits for operation completion, not merely an accepted rece
   assert.equal(app.disposed, true);
 });
 
+test('initialization tolerates a shared server taking more than 15 seconds to finish', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const app = fixture();
+  let initialized = false;
+  const pending = initializeMiniSession(app.client, 'session').then(() => { initialized = true; });
+  await Promise.resolve();
+
+  context.mock.timers.tick(20_000);
+  app.finish('completed');
+  await pending;
+
+  assert.equal(initialized, true);
+  assert.equal(app.calls, 1);
+  assert.equal(app.disposed, true);
+});
+
+test('an unanswered initialization has a bounded deadline without blaming extension installation', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const app = fixture();
+  const pending = initializeMiniSession(app.client, 'session');
+  await Promise.resolve();
+
+  context.mock.timers.tick(60_000);
+
+  await assert.rejects(pending, (error: Error) => {
+    assert.match(error.message, /timed out.*server did not report completion/i);
+    assert.doesNotMatch(error.message, /extension is installed/);
+    return true;
+  });
+  assert.equal(app.calls, 1);
+  assert.equal(app.disposed, true);
+});
+
 test('initialization exposes failed execution and does not retry the action', async () => {
   const app = fixture();
   const pending = initializeMiniSession(app.client, 'session');

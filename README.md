@@ -99,7 +99,7 @@ Published dependencies remain pinned: SDK 0.2.1, server 0.2.1, and Pi 1.0.2/1.0.
 
 - `src/conversation/infra/host/main.ts` and `shared-server.ts`: connection helper and shared-server health/configuration validation. The old `server.ts`/`runtime.ts` private-host helpers remain used only by isolated regression/native lifecycle fixtures, not normal startup.
 - `src/conversation/infra/mini-mode.ts`: installable Pi extension. A global `pi-mini.initialize` action routes to the correct session's Pi API using its raw Pi session ID, not a latest-session closure. It inserts one persisted custom instruction message, without a model turn, user command, UI button or transcript marker. Startup/shutdown maintain routing; existing branch instructions prevent duplicate insertion.
-- `src/conversation/infra/initialize-mini-session.ts`: SDK action admission/completion tracking. The composer is locked until initialization succeeds. Missing extensions, failed operations and interrupted initialization surface errors without automatic replay.
+- `src/conversation/infra/initialize-mini-session.ts`: SDK action admission/completion tracking. The composer is locked until initialization succeeds. Completion can include a slow shared-server catalogue refresh; initialization allows up to 60 seconds. Missing extensions, failed operations and interrupted initialization surface errors without automatic replay. A timeout reports an unknown outcome, not proof that the extension is missing.
 - `src/conversation/infra/native-transport.ts`: bounded, ordered, native socket
   transport only. It preserves close code 4001; it does not own response length.
 - `src/conversation/app/`: SDK state orchestration, selected runtime, latest useful

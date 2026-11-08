@@ -101,7 +101,7 @@ export class Conversation {
       await this.initializeSession?.(this.client, this.selectedId);
     } catch (error) {
       this.initializationFailed = true;
-      if (!this.disposed) this.localError = `Cannot initialize Pi Mini. Check that the Pi Mini extension is installed in the shared server. ${this.describeOutcome(error)}`;
+      if (!this.disposed) this.localError = `Cannot initialize Pi Mini. ${this.describeOutcome(error)}`;
     } finally {
       this.creating = false;
       this.synchronize(this.client.getState());

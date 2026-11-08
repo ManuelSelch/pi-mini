@@ -23,7 +23,9 @@ export async function initializeMiniSession(client: PiClient, sessionId: string)
   const stopConnection = client.subscribe((state) => {
     if (state.connection.phase !== 'ready') reject(new Error('Pi Mini initialization interrupted; nothing was resent. Quit and relaunch to create a new session.'));
   });
-  const timeout = setTimeout(() => reject(new Error('Pi Mini initialization timed out. Check that the Pi Mini extension is installed in the shared server.')), 15_000);
+  // The shared server publishes completion after its session/catalogue refresh.
+  // A normal user environment can exceed 15 seconds even when the action succeeds.
+  const timeout = setTimeout(() => reject(new Error('Pi Mini initialization timed out: the server did not report completion within 60 seconds. The outcome is unknown; nothing was resent. Quit and relaunch Pi Mini to try a fresh session.')), 60_000);
   try {
     const result = await client.runExtensionAction(sessionId, 'pi-mini.initialize');
     operationId = result.operationId;
