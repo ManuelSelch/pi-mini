@@ -20,6 +20,8 @@
     "typecheck": "tsc --noEmit",
     "test": "npm run test:arch && npm run test:application && npm run test:ui",
     "test:arch": "pi-verify architecture",
+    "review": "pi-verify review",
+    "review:open": "pi-verify preview",
     "test:application": "tsx --test tests/companion/initialization.scenarios.test.mjs tests/companion/shared-server.scenarios.test.mjs tests/companion/conversation.scenarios.test.mjs tests/conversation/app/*.test.ts tests/conversation/infra/*.test.ts",
     "test:ui": "vitest run",
     "build:native-fixture": "esbuild tests/support/lifecycle-fixture.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-host/lifecycle-fixture.mjs",

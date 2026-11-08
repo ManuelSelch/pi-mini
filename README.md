@@ -131,6 +131,8 @@ shown as text because pi-mini does not provide pi-chat's file-open action.
 
 ## Verification
 
+Run `npm run review` to generate a report comparing committed revisions, and `npm run review:open` to open the latest report. Review does not run tests or collect coverage.
+
 ```sh
 npm test
 npm run build:native
