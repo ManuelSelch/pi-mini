@@ -24,7 +24,7 @@ npm ci --include=dev
 npm run dev
 ```
 
-Register this checkout as a local package in the shared server's Pi settings (`packages` array), or run `pi install /path/to/pi-mini`. The `pi.extensions` manifest in `package.json` loads the extension directly from source without copying or building it. Keep the checkout and its dependencies available. New sessions load the registered extension. After updating extension code, run `/reload` in a Pi Chat session on the shared server before relaunching Pi Mini: Pi caches extension factories between sessions in the same project. There is no `/mini-mode` user command or extra button. The copy-based `install:extension` script remains an alternative; do not register both installations.
+Register this checkout as a local package in the shared server's Pi settings (`packages` array), or run `pi install /path/to/pi-mini`. The `pi.extensions` manifest in `package.json` loads the extension directly from source without copying or building it. Keep the checkout and its dependencies available. New sessions load the registered extension. After updating extension code, run `/reload` in a Pi Chat session on the shared server before relaunching Pi Mini: Pi caches extension factories between sessions in the same project. There is no `/mini-mode` user command or extra button.
 
 Pi Mini defaults to `ws://127.0.0.1:8788/ws`. Set `PI_MINI_ENDPOINT` for another loopback port and `PI_MINI_PROJECT` for a different initial working directory. Start the shared server before Pi Mini; no private-server fallback is provided.
 
@@ -63,7 +63,7 @@ in production builds; avoid sensitive information in annotations.
   projects or enter an absolute path (or `~/` path); arrows and Enter select a
   folder and start a fresh session. Escape closes the switcher without hiding.
   Switching is unavailable during a run or required question; a successful switch
-  clears the composer draft.
+  clears the composer draft. Once the new session has its instructions, it becomes usable immediately; closing the previous runtime continues in the background without holding the composer closed.
 - Stop aborts the run without closing its runtime or clearing the draft.
 - A replaced controller does not reconnect automatically. Take control is explicit.
 - Control+Option+Space shows/focuses the native window and composer from another
@@ -149,7 +149,7 @@ npm run test:packaging
   isolated real servers and a controlled agent adapter. They do not claim to
   automate the actual Pi Chat frontend. Instruction checks construct a real Pi
   AgentSession and inspect its effective system prompt without a model call.
-- Two approved initialization scenarios in `tests/companion/initialization.scenarios.test.mjs` hold the real server's catalogue lister behind a deterministic gate. They assert initial and switched sessions are ready with instructions while catalogue refresh and the final operation event remain pending.
+- Three approved initialization/switching scenarios in `tests/companion/initialization.scenarios.test.mjs` use deterministic gates around the real server's catalogue lister and previous-runtime disposal. They assert initial and switched sessions are ready with instructions while catalogue refresh is pending, and a new project remains usable during old-runtime teardown. Releasing the teardown gate must eventually dispose/remove only the previous session without disturbing the new project.
 - Unit/DOM tests cover asynchronous operation errors, native transport disposal,
   ordered sends, controller replacement, prompts/follow-ups, composer Stop, and
   compact response/error presentation. DOM tests do not establish native geometry.
@@ -182,9 +182,11 @@ npm run test:packaging
   `PI_MINI_SMOKE_DATA_DIR`; it is not part of routine tests because it consumes
   configured provider access and an already-running shared server with the extension installed. It writes a short session to that server's history; native exit does not stop the server.
 
-Readiness-fix verification: all 31 application/protocol tests and 19 DOM/hook tests pass, including the two approved blocked-catalogue scenarios. Native startup and all three packaged/relocated app scenarios pass, as do TypeScript, web/host/extension and debug/release native builds. The verified release app was installed into `/Applications` after confirmation; the shared server was not restarted or taken over during verification. The extension source is updated in the registered checkout. Run `/reload` in a Pi Chat session before reopening Pi Mini to clear any old extension factory cached by the already-running shared server.
+Background-cleanup verification: all 32 application/protocol tests and 19 DOM/hook tests pass. The previous-runtime disposal gate reproduces the original blocked switch and now proves readiness before teardown completes, followed by eventual cleanup. TypeScript, web/host, debug/release native builds, native startup and the packaged-app startup check pass. The verified build was installed into `/Applications` after confirmation. No extension or shared-server changes were needed for this fix; no `/reload` is required beyond the earlier acknowledgment update.
 
-Earlier shared-server verification: 24 application/protocol tests, 19 DOM/hook tests, the native startup smoke, and all three relocated/packaged-app scenarios pass. TypeScript, web/host/extension builds, debug/release native builds and `cargo check` pass. `main.rs` formatting passes; whole-crate `cargo fmt --check` still reports pre-existing formatting in `lifecycle.rs` and `menu_bar.rs`, left unchanged. The extension installer was checked in a temporary Pi directory, including refusal to overwrite. The user's live extension directory and installed app were not modified by that verification. The checkout is now registered in the user's Pi `settings.json` packages list for direct source loading. Full focus/menu-bar lifecycle and real-model smoke were not rerun for this change.
+Earlier readiness-fix verification: all 31 application/protocol tests and 19 DOM/hook tests pass, including the two approved blocked-catalogue scenarios. Native startup and all three packaged/relocated app scenarios pass, as do TypeScript, web/host and debug/release native builds. The verified release app was installed into `/Applications` after confirmation; the shared server was not restarted or taken over during verification. The extension source is updated in the registered checkout. Run `/reload` in a Pi Chat session before reopening Pi Mini to clear any old extension factory cached by the already-running shared server.
+
+Earlier shared-server verification: 24 application/protocol tests, 19 DOM/hook tests, the native startup smoke, and all three relocated/packaged-app scenarios pass. TypeScript, web/host builds, debug/release native builds and `cargo check` pass. `main.rs` formatting passes; whole-crate `cargo fmt --check` still reports pre-existing formatting in `lifecycle.rs` and `menu_bar.rs`, left unchanged. The user's live extension directory and installed app were not modified by that verification. The checkout is now registered in the user's Pi `settings.json` packages list for direct source loading. Full focus/menu-bar lifecycle and real-model smoke were not rerun for this change.
 
 Earlier verification covered 13 application/transport tests, 11 DOM/hook tests,
 production builds, startup smoke and the three original lifecycle scenarios. The

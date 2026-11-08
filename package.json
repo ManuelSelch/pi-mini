@@ -12,8 +12,6 @@
     "dev": "npm run build:host && tauri dev",
     "dev:web": "vite --host 127.0.0.1",
     "build:host": "esbuild src/conversation/infra/host/main.ts --bundle --platform=node --format=esm --packages=external --outfile=dist-host/main.mjs",
-    "build:extension": "esbuild src/conversation/infra/mini-mode.ts --bundle --platform=node --format=esm --outfile=dist-extension/index.js",
-    "install:extension": "npm run build:extension && node scripts/install-extension.mjs",
     "build:web": "vite build",
     "build": "npm run typecheck && npm run build:host && npm run build:web",
     "build:native": "npm run build && tauri build --debug --no-bundle",

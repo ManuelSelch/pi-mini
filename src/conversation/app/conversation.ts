@@ -212,7 +212,8 @@ export class Conversation {
       this.projectPath = path;
       this.usefulResponse = '';
       this.ignoreRecoveredDraft = false;
-      if (previous) await this.client.closeSession(previous).catch(() => {});
+      // Old-runtime teardown must not hold the new session's composer closed.
+      if (previous) void this.client.closeSession(previous).catch(() => {});
     });
   }
 
