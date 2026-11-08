@@ -1,0 +1,8 @@
+{
+  "architecture": {
+    "diagram": "docs/architecture.drawio",
+    "root": "src",
+    "slices": ["conversation/*", "lifecycle/*"],
+    "strict": true
+  }
+}

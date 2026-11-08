@@ -103,6 +103,8 @@ Published dependencies remain pinned: SDK 0.2.1, server 0.2.1, and Pi 1.0.2/1.0.
 
 ## Architecture
 
+The [architecture diagram](docs/architecture.drawio) tracks TypeScript imports between conversation and lifecycle layer folders. Run `npm run test:arch` to check it or `npx pi-verify architecture --write` to refresh it; review and place newly staged boxes in draw.io. The check excludes root-level files, Rust and runtime dependencies, so it is not a complete runtime architecture.
+
 - `src/conversation/infra/host/main.ts` and `shared-server.ts`: connection helper and shared-server health/configuration validation. The old `server.ts`/`runtime.ts` private-host helpers remain used only by isolated regression/native lifecycle fixtures, not normal startup.
 - `src/conversation/infra/mini-mode.ts`: installable Pi extension. A global `pi-mini.initialize` action routes to the correct session's Pi API using its raw Pi session ID, not a latest-session closure. It inserts one persisted custom instruction message, without a model turn, user command, UI button or transcript marker, then immediately sends a session-scoped informational acknowledgment through the existing notification channel. Startup/shutdown maintain routing; existing branch instructions prevent duplicate insertion.
 - `src/conversation/infra/initialize-mini-session.ts`: SDK action admission/instruction-acknowledgment tracking. Startup and project switches unlock after the extension confirms insertion, not after `operation.finished`; the server's catalogue refresh continues in the background, as it does for Pi Chat session opening. An accepted receipt alone is insufficient. Unrelated notifications or other sessions cannot unlock the composer. Missing acknowledgments, failed operations and interrupted initialization surface errors without replay; the acknowledgment deadline is 60 seconds. Completion without acknowledgment is an error, not a legacy fallback. A timeout reports an unknown outcome, not proof that the extension is missing. Update/reload the extension along with the app; `/reload` must run in a session on the shared server, not just in an unrelated terminal Pi process.
@@ -134,6 +136,8 @@ Markdown pipeline (GFM, highlighted code and KaTeX math); local file links are
 shown as text because pi-mini does not provide pi-chat's file-open action.
 
 ## Verification
+
+Run `npm run review` to generate a report comparing committed revisions, and `npm run review:open` to open the latest report. Review does not run tests or collect coverage.
 
 ```sh
 npm test

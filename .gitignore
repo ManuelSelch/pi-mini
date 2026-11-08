@@ -1,4 +1,6 @@
 node_modules/
+.pi-verify/
+.pi/npm/
 dist/
 dist-extension/
 dist-host/
