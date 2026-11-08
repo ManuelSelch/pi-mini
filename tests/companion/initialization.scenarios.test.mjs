@@ -5,8 +5,8 @@ let app;
 beforeEach(() => { app = new SharedServerDriver(); });
 afterEach(async () => { await app.dispose(); });
 
-// Real extension/runtime/server/SDK. Block catalogue completion deterministically,
-// not with timing sleeps. No browser rendering or model requests.
+// Real extension/runtime/server/SDK. Deterministic gates, not timing sleeps.
+// No browser rendering or model requests.
 test('a new Pi Mini session becomes usable after its instructions are inserted while catalogue refresh remains pending', async () => {
   await app.startPiChatServer();
   await app.holdInitializationCatalogueRefresh();
@@ -15,6 +15,22 @@ test('a new Pi Mini session becomes usable after its instructions are inserted w
   await app.shouldBeReady();
   await app.shouldHaveInstructions();
   await app.shouldHaveCatalogueRefreshPending();
+});
+
+test('a new project is usable while the previous session closes in the background', async () => {
+  await app.startPiChatServer();
+  await app.startPiMini();
+  await app.holdPreviousSessionClose();
+  await app.switchToAnotherProject();
+
+  await app.shouldHaveChangedProject();
+  await app.shouldBeReady();
+  await app.shouldHaveInstructions();
+  await app.shouldHaveCleanupPending();
+
+  await app.releasePreviousSessionClose();
+
+  await app.shouldHaveClosedPreviousSession();
 });
 
 test('switching projects initializes the new Pi Mini session without waiting for catalogue refresh', async () => {

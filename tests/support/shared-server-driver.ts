@@ -33,6 +33,11 @@ export class SharedServerDriver {
   private catalogueBaseline = 0;
   private previousProjectSession?: string;
   private nextProject?: string;
+  private closingRuntime?: AgentSessionRuntime;
+  private closeGate?: Promise<void>;
+  private releaseClose?: () => void;
+  private cleanupPending = false;
+  private disposedRuntimes = new Set<AgentSessionRuntime>();
   private connect(endpoint: string) {
     return new PiClient({ endpoint, transport: createWebSocketTransport((url) => new WebSocket(url)) });
   }
@@ -60,6 +65,19 @@ export class SharedServerDriver {
       }, { cwd, agentDir, sessionManager: manager });
       this.runtimes.push(runtime);
       const adapter = createPiRuntimeAdapter(runtime);
+      const dispose = adapter.dispose.bind(adapter);
+      adapter.dispose = async () => {
+        if (runtime === this.closingRuntime && this.closeGate) {
+          this.cleanupPending = true;
+          await this.closeGate;
+        }
+        try {
+          await dispose();
+          this.disposedRuntimes.add(runtime);
+        } finally {
+          if (runtime === this.closingRuntime) this.cleanupPending = false;
+        }
+      };
       await runtime.session.bindExtensions({ uiContext: adapter.uiContext(), mode: 'rpc' });
       adapter.prompt = async (text: string) => {
         const user = { role: 'user' as const, content: text, timestamp: Date.now() };
@@ -181,11 +199,35 @@ export class SharedServerDriver {
     await mkdir(this.nextProject);
     let switched: boolean | undefined;
     const switching = this.app!.switchProject(this.nextProject).then(result => { switched = result; });
-    // Bound failures without releasing the catalogue gate to conceal the regression.
-    await this.until(() => switched !== undefined, 'project switch returns before catalogue completion');
+    // Bound failures without releasing gates to conceal blocking work.
+    await this.until(() => switched !== undefined, 'project switch returns without waiting for background work');
     await switching;
     assert.equal(switched, true);
   }
+  async holdPreviousSessionClose(): Promise<void> {
+    const state = this.app!.client.getSession(this.app!.getView().sessionId!);
+    this.closingRuntime = this.runtimes.find(runtime => runtime.session.sessionManager.getSessionFile() === state?.sessionPath);
+    assert.ok(this.closingRuntime);
+    this.closeGate = new Promise(resolve => { this.releaseClose = resolve; });
+  }
+  async shouldHaveCleanupPending(): Promise<void> {
+    await this.until(() => this.cleanupPending, 'previous runtime disposal started');
+    assert.ok(this.releaseClose, 'Disposal must still be blocked');
+    assert.equal(this.disposedRuntimes.has(this.closingRuntime!), false);
+    assert.equal(this.app!.client.getSession(this.previousProjectSession!)?.status, 'closing');
+  }
+  async releasePreviousSessionClose(): Promise<void> {
+    assert.ok(this.releaseClose);
+    this.releaseClose();
+    this.releaseClose = undefined;
+  }
+  async shouldHaveClosedPreviousSession(): Promise<void> {
+    await this.until(() => this.disposedRuntimes.has(this.closingRuntime!) && !this.app!.client.getSession(this.previousProjectSession!), 'previous runtime disposed and removed');
+    assert.equal(this.cleanupPending, false);
+    await this.shouldBeReady();
+    await this.shouldHaveChangedProject();
+  }
+
   async shouldHaveChangedProject(): Promise<void> {
     assert.notEqual(this.app!.getView().sessionId, this.previousProjectSession);
     const selected = this.app!.client.getSession(this.app!.getView().sessionId!);
@@ -193,6 +235,8 @@ export class SharedServerDriver {
   }
 
   async dispose() {
+    this.releaseClose?.();
+    this.releaseClose = undefined;
     this.releaseCatalogue?.();
     this.releaseCatalogue = undefined;
     this.catalogueGate = undefined;
