@@ -159,23 +159,18 @@ npm run test:packaging
   compact response/error presentation. DOM tests do not establish native geometry.
 - Native smoke launches the actual executable/WebView, native WebSocket plugin,
   shared server and real Pi runtime/extension. It asserts SDK readiness, initialized runtime creation and fixed dimensions/non-resizability without sending a model message. The test runner owns the disposable external server; the app only owns its connection helper.
-- Native menu bar scenarios are at `tests/companion/menu-bar.scenarios.test.mjs`.
-  They use Accessibility and synthetic mouse input to open the test process's
-  status menu, then select named menu items through Accessibility. They require
-  an idle desktop; concurrent user interaction can interfere with them.
-- Three approved native lifecycle scenarios are at
-  `tests/companion/mvp-lifecycle.scenarios.test.mjs`. They use the real native
-  window/WebView, SDK, sidecar and server with a controlled test-only agent (no
-  model/credential access). The macOS helper activates another app, posts the
-  actual global shortcut and Cmd+Q, and queries the real foreground application.
-  Driver probes additionally assert native visibility/focus/dimensions, composer
-  DOM focus, session/backend identity, draft retention, background completion,
-  single submission and owned-process/listener shutdown. Input drafts and local
-  Enter/Escape events are driven inside the real WebView; these are not evidence
-  of physical text entry or physical Escape-key delivery. No screenshot or visual
-  fidelity claim.
-  Scenarios use standard beforeEach/afterEach with a fresh driver and guaranteed
-  teardown, not per-scenario wrapper helpers.
+- The native menu-bar scenario in `tests/companion/menu-bar.scenarios.test.mjs`
+  restores a hidden window and quits its owned backend. It uses Accessibility and
+  synthetic mouse input to open the test process's status menu, then selects named
+  menu items through Accessibility.
+- The native shortcut scenario in `tests/companion/mvp-lifecycle.scenarios.test.mjs`
+  checks hide/show, focus and draft retention with a real window, WebView and
+  controlled test-only agent. The helper posts the global shortcut and checks the
+  foreground application; draft input is driven inside the WebView. These tests
+  require an idle desktop and do not establish visual fidelity or physical typing.
+- Stop behavior and completion during disconnection are covered by application
+  and DOM tests. They do not prove that closing a native window preserves a
+  running conversation.
 - Native scenarios run serially because they temporarily change foreground focus
   and share the OS shortcut namespace. They require macOS Accessibility/event-post
   permission for the test runner; missing permission is a test failure, not a
