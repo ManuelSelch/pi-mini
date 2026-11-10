@@ -207,7 +207,7 @@ export class RemainingMvpDriver {
         report.composerFocused === true &&
         Number(this.input('frontmost')) === this.child!.pid
       );
-    }, 'global shortcut restored native and composer focus');
+    }, 'companion restored native and composer focus');
   }
   async expectFixedWindowWithoutCollapseControls(): Promise<void> {
     const report = await this.command('probe');

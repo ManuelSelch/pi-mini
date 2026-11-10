@@ -160,8 +160,9 @@ npm run test:packaging
 - Native smoke launches the actual executable/WebView, native WebSocket plugin,
   shared server and real Pi runtime/extension. It asserts SDK readiness, initialized runtime creation and fixed dimensions/non-resizability without sending a model message. The test runner owns the disposable external server; the app only owns its connection helper.
 - Native menu bar scenarios are at `tests/companion/menu-bar.scenarios.test.mjs`.
-  They use Accessibility and synthetic keyboard input and require an idle desktop;
-  concurrent user interaction can interfere with them.
+  They use Accessibility and synthetic mouse input to open the test process's
+  status menu, then select named menu items through Accessibility. They require
+  an idle desktop; concurrent user interaction can interfere with them.
 - Three approved native lifecycle scenarios are at
   `tests/companion/mvp-lifecycle.scenarios.test.mjs`. They use the real native
   window/WebView, SDK, sidecar and server with a controlled test-only agent (no

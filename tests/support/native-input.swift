@@ -26,6 +26,14 @@ func find(_ element: AXUIElement, named name: String, depth: Int = 0) -> AXUIEle
     return nil
 }
 
+func describe(_ element: AXUIElement, depth: Int = 0) -> [String] {
+    var role: CFTypeRef?
+    let result = AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &role)
+    let line = "\(String(repeating: " ", count: depth))role=\(role ?? "?" as CFString) title=\(title(element)) result=\(result.rawValue)"
+    if depth >= 5 { return [line] }
+    return [line] + children(element).flatMap { describe($0, depth: depth + 1) }
+}
+
 switch command {
 case "presence", "menu-show", "menu-quit":
     guard let value = CommandLine.arguments.last, let pid = Int32(value), let app = NSRunningApplication(processIdentifier: pid) else { fail("Cannot find companion") }
@@ -35,18 +43,30 @@ case "presence", "menu-show", "menu-quit":
     var barValue: CFTypeRef?
     guard AXUIElementCopyAttributeValue(application, "AXExtrasMenuBar" as CFString, &barValue) == .success, let barValue else { fail("Cannot access companion menu bar") }
     let bar = barValue as! AXUIElement
-    guard let item = find(bar, named: "π") ?? children(bar).first else { fail("Pi Mini status item not found") }
+    guard let item = find(bar, named: "π") else { fail("Pi Mini status item not found for PID \(pid); titles: \(children(bar).map(title))") }
     if command != "presence" {
-        guard AXUIElementPerformAction(item, kAXPressAction as CFString) == .success else { fail("Cannot open Pi Mini menu") }
-        guard CGPreflightPostEventAccess(), let source = CGEventSource(stateID: .hidSystemState) else { fail("Keyboard event permission is required") }
-        func key(_ code: CGKeyCode) {
-            CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: true)?.post(tap: .cghidEventTap)
-            CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: false)?.post(tap: .cghidEventTap)
-            usleep(100000)
-        }
-        usleep(300000)
-        if command == "menu-quit" { key(126) } else { key(125) }
-        key(36)
+        let wanted = command == "menu-quit" ? "Quit Pi Mini" : "Show Pi Mini"
+        guard CGPreflightPostEventAccess(), let source = CGEventSource(stateID: .hidSystemState) else { fail("Mouse event permission is required") }
+        var positionValue: CFTypeRef?
+        var sizeValue: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(item, kAXPositionAttribute as CFString, &positionValue) == .success,
+              AXUIElementCopyAttributeValue(item, kAXSizeAttribute as CFString, &sizeValue) == .success,
+              let positionValue, let sizeValue else { fail("Cannot locate Pi Mini status item for PID \(pid)") }
+        var position = CGPoint.zero
+        var size = CGSize.zero
+        guard AXValueGetValue(positionValue as! AXValue, .cgPoint, &position), AXValueGetValue(sizeValue as! AXValue, .cgSize, &size) else { fail("Invalid Pi Mini status item geometry for PID \(pid)") }
+        let point = CGPoint(x: position.x + size.width / 2, y: position.y + size.height / 2)
+        CGEvent(mouseEventSource: source, mouseType: .leftMouseDown, mouseCursorPosition: point, mouseButton: .left)?.post(tap: .cghidEventTap)
+        CGEvent(mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: point, mouseButton: .left)?.post(tap: .cghidEventTap)
+        let deadline = Date().addingTimeInterval(3)
+        var menuItem: AXUIElement?
+        repeat {
+            menuItem = find(application, named: wanted) ?? find(bar, named: wanted)
+            if menuItem == nil { usleep(50000) }
+        } while menuItem == nil && Date() < deadline
+        guard let menuItem else { fail("Menu item '\(wanted)' not found for PID \(pid) after opening status item. Bar tree:\n\(describe(bar).joined(separator: "\n"))") }
+        let press = AXUIElementPerformAction(menuItem, kAXPressAction as CFString)
+        guard press == .success else { fail("Cannot press menu item '\(wanted)' for PID \(pid): \(press.rawValue)") }
     }
 case "frontmost": print(NSWorkspace.shared.frontmostApplication?.processIdentifier ?? -1)
 case "other":
