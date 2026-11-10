@@ -1,5 +1,3 @@
 {
-  "packages": [
-    "npm:@manuelselch/pi-verify"
-  ]
+  "packages": ["npm:@manuelselch/pi-verify"]
 }
