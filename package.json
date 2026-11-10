@@ -38,13 +38,9 @@
   },
   "dependencies": {
     "@earendil-works/chord": "1.0.3",
-    "@earendil-works/pi-agent-core": "1.0.2",
-    "@earendil-works/pi-ai": "1.0.2",
     "@earendil-works/pi-codemode": "1.0.3",
-    "@earendil-works/pi-coding-agent": "1.0.2",
     "@earendil-works/pi-mcp": "1.0.3",
     "@earendil-works/pi-telemetry": "1.0.3",
-    "@earendil-works/pi-tui": "1.0.3",
     "@mantine/core": "9.7.5",
     "@mantine/hooks": "9.7.5",
     "@manuelselch/pi-sdk": "0.2.1",
@@ -61,6 +57,12 @@
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-agent-core": "*",
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
